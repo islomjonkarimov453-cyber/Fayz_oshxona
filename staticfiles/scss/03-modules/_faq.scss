@@ -1,0 +1,278 @@
+/*----------------------------------------*/
+/*  03.18 - Faq
+/*----------------------------------------*/
+
+.rs-faq{
+    &__content{
+        padding-left: 86px;
+        @media #{$desktop-device} {
+            padding-left: 0;
+        }  
+        @media #{$tablet-device} {
+            padding-left: 0;
+        }  
+        @media #{$large-mobile} {
+            padding-left: 0;
+        }  
+        .rs-section-title{
+            margin-bottom: 37px;
+            @media #{$tablet-device} {
+                text-align: left;
+            }
+            @media #{$large-mobile} {
+                text-align: left;
+                margin-top: 40px;
+            }
+            & .top-sub-heading{
+                & span{
+                    background-color: transparent;
+                    background-image: linear-gradient(99.43deg, #f24c1a 0.99%, #f28e26 99.43%);
+                }
+            }
+            & .title{
+                color: $heading-color-2;
+            }
+        }
+    }
+    &__link{
+        & a{
+            margin-top: 10px;
+        }
+    }
+    &__thumb{
+        position: relative;
+        z-index: 10;
+        & .rs-shape{
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            width: 750px;
+            @media #{$desktop-device} {
+                display: none; 
+            }  
+            @media #{$tablet-device} {
+                display: none;
+            }  
+            @media #{$large-mobile} {
+                display: none;
+            }  
+        }
+    }
+}
+
+
+
+
+
+.accordion{
+    width: auto;
+    height: 60px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: height 0.3s ease;
+    margin-bottom: 24px;
+    @media #{$small-mobile} {
+        height: 80px;
+    }
+    & .accordion_tab{
+        padding: 20px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 700;
+        font-family: $headings-font-family;
+        text-transform: capitalize;
+        color: $heading-color-2;
+        position: relative;
+        @media #{$desktop-device} {
+            font-size: 15px;
+        }  
+        @media #{$small-mobile} {
+            padding: 20px 50px 20px 20px;
+        }  
+        & .accordion_arrow{
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #F2F4F7;
+        }
+        & img{
+            width: 100%;
+            height: 100%;
+        }
+        &.active{
+            & .accordion_arrow{
+                background: #FDEBDD;
+                color: $theme-color-2;
+                transform: translateY(-50%) rotate(180deg);
+                & i{
+                    &::before{
+                        content: "\f1ae";
+                    }
+                }
+            }
+        }
+    }
+    &.active{
+        height: 190px;
+        @media #{$laptop-device} {
+            height: 210px;
+        }
+        @media #{$desktop-device} {
+            height: 215px;
+        }
+        @media #{$tablet-device} {
+            height: 195px;
+        }
+        @media #{$small-mobile} {
+            height: 275px;
+        }
+
+    }
+    & .accordion_content{
+        padding: 20px;
+        border-top: 1px solid #E5E9EE;
+        & .accordion_item{
+            margin-bottom: 20px; 
+            & p{
+                color: $text-color;
+                font-size: 16px;
+                line-height: 28px;
+            }           
+        }
+    }
+}
+
+
+
+
+.rs-contact{
+    background: #F8F7FD;
+    &.rs-faq-contact{
+        
+        @media #{$tablet-device} {
+            padding-bottom: 80px;
+            padding-top: 80px;
+        }
+        @media #{$large-mobile} {
+            padding-bottom: 80px;
+            padding-top: 80px;
+        }
+        & .rs-contact__form-box{
+            margin-right: 0;
+            margin-left: 0px;
+        }   
+    
+    & .rs-contact__thumb{
+        right: auto;
+        left: 170px;
+        bottom: 40px;
+        @media #{$laptop-device} {
+            left: 0;
+        }
+        @media #{$desktop-device} {
+            left: 0;
+            width: 50%;
+        }
+        @media #{$tablet-device} {
+            display: none;
+        }
+    }
+    .rs-contact__shape1{
+        right: auto;
+        left: 800px;
+    }
+    & .rs-contact__shape2{
+        right: 950px;
+        @media #{$desktop-device} {
+            display: none;
+        }
+        @media #{$tablet-device} {
+            display: none;
+        }
+        @media #{$large-mobile} {
+            display: none;
+        }
+    }
+    & .rs-section-title{
+        & .top-sub-heading{
+            & span{
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-color: transparent;
+                background-image: linear-gradient(99.43deg, #f24c1a 0.99%, #f28e26 99.43%);
+            }
+        }
+        .title{
+            color: $heading-color-2;
+        }
+    }
+}
+}
+
+
+
+.rs-faq-page{
+    @media #{$tablet-device} {
+        padding-bottom: 80px;
+        padding-top: 80px;
+    }
+    @media #{$large-mobile} {
+        padding-bottom: 80px;
+        padding-top: 80px;
+    }
+    &__thumb{
+        text-align: left;
+        padding-left: 35px;
+        @media #{$tablet-device} {
+            padding-left: 0;
+            padding-top: 50px;
+        }
+        @media #{$large-mobile} {
+            padding-left: 0;
+            padding-top: 50px;
+        }
+    }
+    &__box{
+        padding-right: 65px;
+        @media #{$laptop-device} {
+            padding-right: 0;
+        }
+        @media #{$desktop-device} {
+            padding-right: 0;
+        }
+        @media #{$tablet-device} {
+            padding-right: 0;
+        }
+        @media #{$large-mobile} {
+            padding-right: 0;
+        }
+        & .accordion{
+            background: #f7f7f7;
+            &.active{
+                @media #{$tablet-device} {
+                    height: 160px;
+                }
+            }
+            & .accordion_tab{
+                & .accordion_arrow{
+                    background: $white;
+                    color: $primary;
+                }
+            }
+        }
+    }
+}

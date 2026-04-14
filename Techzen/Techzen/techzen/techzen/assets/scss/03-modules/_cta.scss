@@ -1,0 +1,199 @@
+/*----------------------------------------*/
+/*  03.07 - Cta
+/*----------------------------------------*/
+
+.rs-cta{
+    background-image: url(../images/cta/cta-bg.jpg);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    & .rs-section-title{
+        & .top-sub-heading {
+            & img{
+                &.item-2{
+                    display: none;
+                }
+            }
+        }
+        & a{
+            background: $white;
+            color: $heading-color;
+            border: 2px solid $white;
+            transition: $transition;
+            margin-top: 40px;
+            & svg{
+                margin-left: 6px;
+                & path{
+                    fill: $primary;
+                    transition: $transition;
+                }
+            }
+            &:hover{
+                background: transparent;
+                color: $white;
+                & svg{
+                    & path{
+                        fill: $white;
+                        
+                    }
+                }
+            }
+        }
+    }
+    &__main-box{
+        margin-left: 45px;
+        @media #{$extra-minBig-device} {
+            margin-left: 0;
+        }
+        @media #{$laptop-device} {
+            margin-left: 0;
+        }
+    }
+    &__item-box{
+        position: relative;
+        z-index: 20;
+        & .rs-image{
+            position: absolute;
+            right: -10px;
+            bottom: -10px;
+            height: 100%;
+            width: 100%;
+            transition: $transition;
+            & img{
+                height: 100%;
+                width: 100%;
+                &.item-2{
+                    display: none;
+                }
+            }
+        }
+        &:hover{
+            & .rs-image{
+                right: 0;
+                bottom: 0;
+            }
+        }
+    }
+    &__box{
+        text-align: center;
+        background: $white;
+        border-radius: 10px;
+        padding: 24px 20px 24px 20px;
+        margin-top: 30px;
+        position: relative;
+        z-index: 10;
+        & .bg-icon{
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: 48% auto;
+            z-index: -1;
+            opacity: 0.05;
+        }
+        & .icon{
+            width: 60px;
+            display: inline-block;
+            transition: all linear 0.5s;
+        }
+        & .title{
+            font-size: 20px;
+            line-height: 32px;
+            margin-top: 9px;
+            @media #{$extra-minBig-device} {
+                font-size: 15px;
+            } 
+            @media #{$desktop-device} {
+                font-size: 14px;
+            } 
+            & a{
+                transition: $transition;
+                &:hover{
+                    color: #F26F20;
+                }
+            }
+        }
+        &:hover{
+            & .icon{
+                transform: rotateY(360deg);
+            }
+        }
+    }
+}
+
+
+
+.rs-cta-3{
+    background-image: url(../images/cta/cta-section.png);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    &__box{
+        max-width: 630px;
+        margin: 0 auto;
+        text-align: center;
+        & .title{
+            color: $white;
+            font-size: 42px;
+            line-height: 52px;
+            @media #{$small-mobile} { 
+                font-size: 24px;
+                line-height: 32px;
+            }
+        }
+        & p{
+            color: #FFFFFFCC;
+            margin: 13px 0 42px;
+        }
+        & a{
+            &::after{
+                border-color: $theme-color-3;
+            }
+        }
+    }
+    &.rs-cta-4{
+        background-image: url(../images/cta/cta-section-orange.png);
+        & .rs-cta-3__box{
+            & a{
+                color: $heading-color;
+                &::before{
+                    background: $white;
+                }
+            }
+        }
+    }
+}
+
+
+.rs-cta-6{
+    background-image: url(../images/cta/bg-with-shape.png);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    margin-bottom: -1px;
+    & .rs-section-title-4{
+        padding: 0 87px;
+        @media #{$extra-minBig-device-2} {
+            padding: 0;
+        }
+        & .title{
+            color: $white;
+        }
+        & p{
+            color: $white;
+        }
+        & a{
+            padding: 20px 60px 20px 60px;
+            background: $white;
+            color: #4640DE;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 40px;
+            transition: $transition;
+        }
+    }
+}

@@ -1,0 +1,221 @@
+/*----------------------------------------*/
+/*  03.11 - Brand
+/*----------------------------------------*/
+
+.rs-brand{
+    position: relative;
+    z-index: 10;
+    &__top-title{
+        text-align: center;
+        position: relative;
+        margin-bottom: 45px;
+        & span{
+            font-size: 24px;
+            line-height: 24px;
+            font-weight: 700;
+            font-family: $headings-font-family;
+            color: $heading-color;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-color: transparent;
+            background-image: linear-gradient(99.43deg, #f24c1a 0.99%, #f28e26 99.43%);
+            @media #{$tablet-device} {
+                font-size: 20px;
+            } 
+            @media #{$large-mobile} {
+                font-size: 18px;
+            } 
+        }
+        &::before{
+            position: absolute;
+            content: '';
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            width: 28%;
+            background: #EBECF2;
+            @media #{$laptop-device} {
+                width: 24%;
+            } 
+            @media #{$desktop-device} {
+                width: 20%;
+            } 
+            @media #{$tablet-device} {
+                display: none;
+            } 
+            @media #{$large-mobile} {
+                display: none;
+            } 
+        }
+        &::after{
+            position: absolute;
+            content: '';
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            width: 28%;
+            background: #EBECF2;
+            @media #{$laptop-device} {
+                width: 24%;
+            } 
+            @media #{$desktop-device} {
+                width: 20%;
+            }
+            @media #{$tablet-device} {
+                display: none;
+            } 
+            @media #{$large-mobile} {
+                display: none;
+            } 
+        }
+        & img{
+            &.item-2{
+                display: none;
+            }
+        }
+    }
+    &__slider{
+        & .rs-brand-slider-item{
+            & a{
+                display: block;
+                padding: 30px 30px;
+                text-align: center;
+                @media #{$tablet-device} {
+                    padding: 15px 30px;
+                } 
+                @media #{$large-mobile} {
+                    padding: 10px 15px;
+                } 
+                @media #{$small-mobile} {
+                    padding: 15px;
+                } 
+                & img{
+                    width: 175px;
+                    transition: $transition;
+                    &.item-2{
+                        display: none;
+                    }
+                }
+                &:hover{
+                    & img{
+                        transform: rotateX(360deg);
+                    }
+                }
+            }
+        }
+    }
+    &.rs-brand-6{
+        background-image: url(../images/brand/pcb-pattern-bg-left-top.png);
+        background-size: auto;
+        background-position: top left;
+        background-repeat: no-repeat;
+    }
+    &.rs-brand-2{
+        .rs-brand__top-title{
+            span{                
+            background: -webkit-linear-gradient(130deg, #f28e26 0%, #f24c1a 100%);
+            background-clip: border-box;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            }
+        }
+    }
+    &.service-brand{
+        .rs-brand__top-title{
+            span{
+                background: -webkit-linear-gradient(130deg, #f28e26 0%, #f24c1a 100%);
+                background-clip: border-box;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+        }
+    }
+}
+
+
+.rs-brand-3{
+    background-image: url(../images/brand/parter-bg.jpg);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    &__slider{
+        & .rs-brand-slider-item{
+            padding: 30px 44px 30px 45px;
+            @media #{$tablet-device} { 
+                padding: 30px 20px 30px 20px;
+            }
+            @media #{$large-mobile} { 
+                padding: 30px 20px 30px 20px;
+            }
+            @media #{$small-mobile} { 
+                padding: 0px 20px 0px 20px;
+            }
+            & img{
+                transition: $transition;
+            }
+            &:hover{
+                & img{
+                    transform: rotateX(-360deg);
+                }
+            }
+            
+        }
+        & .owl-stage{
+            display: flex;
+            align-items: center;
+        }
+    }
+}
+
+
+
+.rs-customer{
+    padding-bottom: 400px;
+    position: relative;
+    z-index: 10;
+    @media #{$large-mobile} {
+        padding-bottom: 340px;
+    }
+    &__top-title{
+        margin-bottom: 50px;
+        text-align: center;
+        & span{
+            font-family: $headings-font-family;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 26px;
+            color: $heading-color;
+            margin: 0;
+            padding: 0px 10px 0px 10px;
+        }
+    }
+    &__item{
+        margin-right: 25px;
+        margin-bottom: 30px;
+        display: inline-flex;
+        & img{
+            height: 130px;
+            padding: 30px 30px 30px 30px;
+            background-color: #F2FFF7;
+            border-style: solid;
+            border-width: 1px 1px 1px 1px;
+            border-color: #EBEBEB;
+            cursor: pointer;
+        }
+    }
+}
+
+.rs-contact-brand{
+    .rs-contact-brand__box{
+        .brand-item{
+            & img{
+                &.item-2{
+                    display: none;
+
+                }
+            }
+        }
+    }
+}

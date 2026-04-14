@@ -1,0 +1,188 @@
+/*----------------------------------------*/
+/*  03.06 - Counter
+/*----------------------------------------*/
+
+.rs-counter{    
+    & .row{
+        .col-lg-2{
+            padding: 0 10px;
+        }
+    }
+    &__item{
+        background-image: url(../images/counter/dotted-shape.png);
+        background-position: top center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-color: #F8F7FD;
+        border-radius: 10px;
+        overflow: hidden;
+        text-align: center;
+        padding: 35px 0px;
+        margin-top: 30px;
+        & .icon{
+            margin-bottom: 30px;
+        }
+        & span{
+            font-size: 36px;
+            line-height: 48px;
+            color: $primary;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #F26F20;
+            @media #{$laptop-device} {
+                font-size: 30px;
+            } 
+            @media #{$desktop-device} {
+                font-size: 26px;
+            } 
+            @media #{$tablet-device} {
+                font-size: 26px;
+            } 
+        }
+        & .title{
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 28px;
+            margin-top: 10px;
+            @media #{$desktop-device} {
+                font-size: 16px;
+                line-height: 24px;
+            } 
+            @media #{$tablet-device} {
+                font-size: 16px;
+                line-height: 24px;
+            } 
+        }
+    }
+}
+
+
+
+.rs-counter-2{
+    &__title{
+        & .title{
+            font-size: 25px;
+            color: $heading-color-2;
+        }
+    }
+    &__item{
+        position: relative;
+        z-index: 10;
+        padding-left: 75px;
+        margin-top: 56px;
+        &::before{
+            position: absolute;
+            content: '';
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 120px;
+            width: 120px;
+            border-radius: 10px;
+            background: #F5F5F8;
+            z-index: -1;
+        }
+        &.item-2{
+            padding-left: 98px;
+            @media #{$desktop-device} {
+                padding-left: 80px;
+            }
+            &::before{
+                left: 40px;
+                background: #FFFAF6;
+            }
+        }
+        &.item-3{
+            padding-left: 88px;
+            &::before{
+                left: 40px;
+            }
+        }
+        &.item-4{
+            &::before{
+                background: #FFFAF6;
+            }
+        }
+    }
+    &__icon{
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    &__content{
+        & .title{
+            font-size: 36px;
+            line-height: 48px;
+            color: $theme-color-2;
+            font-family: $headings-font-family;
+            letter-spacing: 2px;
+            @media #{$desktop-device} {
+                font-size: 32px;
+                line-height: 42px;
+            }
+        }
+        & > span{
+            font-size: 20px;
+            font-weight: 600;
+            color: $heading-color-2;
+            font-family: $headings-font-family;
+            line-height: 32px;
+            @media #{$laptop-device} {
+                font-size: 20px;
+            }
+            @media #{$desktop-device} {
+                font-size: 17px;
+            }
+        }
+    }
+    &.rs-service-counter{
+        padding-top: 115px;
+        & .rs-counter-2__content {
+            & .title{
+                color: $primary;
+                & span{
+                    color: $primary;
+                }
+            }
+        }
+        & .rs-counter-2__item{
+            &.item-2{
+                &::before{
+                    background: #F6F5FE;
+                }
+            }
+            &.item-4{
+                &::before{
+                    background: #F6F5FE;
+                }
+            }
+        }
+    }
+    &.rs-counter-3{
+        .rs-counter-2__item{
+            &::before{
+                display: none;
+            }
+            .rs-counter-2__icon{
+                img{
+                    width: 65px;
+                }
+            }
+            .rs-counter-2__content{
+                .title{
+                    color: $heading-color-2;
+                    span{
+                        color: $heading-color-2;
+                    }
+                }
+                & >span{
+                    color: $text-color;
+                    font-weight: 500;
+                }
+            }
+        }
+    }
+}
+
+

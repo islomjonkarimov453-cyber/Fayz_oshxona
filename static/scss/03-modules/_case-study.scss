@@ -1,0 +1,265 @@
+/*----------------------------------------*/
+/*  03.09 - Case Study
+/*----------------------------------------*/
+
+.rs-case-study{
+    position: relative;
+    z-index: 10;
+    margin-top: -197px;
+    overflow: hidden;
+    &::before{
+        position: absolute;
+        content: '';
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 940px;
+        background-image: url(../images/case-study/portfolio-Bg.png);
+        background-repeat: no-repeat;
+        background-position: left center;
+        background-size: cover;
+        z-index: -1;
+        @media #{$desktop-device} {
+            width: 100%;
+        } 
+        @media #{$tablet-device} {
+            width: 100%;
+        } 
+        @media #{$large-mobile} {
+            width: 100%;
+        } 
+
+    }
+    & .rs-section-title{
+        & > a{
+            background: $white;
+            color: $heading-color;
+            border: 2px solid $white;
+            transition: $transition;
+            margin-top: 40px;
+            & svg{
+                margin-left: 8px;
+                & path{
+                    fill: $primary;
+                    transition: $transition;
+                }
+            }
+            &:hover{
+                background: transparent;
+                color: $white;
+                & svg{
+                    & path{
+                        fill: $white;
+                    }
+                }
+            }
+        }
+    }
+    &__slider{
+        padding-left: 63px;
+        margin-right: -110px;
+        @media #{$laptop-device} {
+            margin-right: 0;
+        } 
+        @media #{$desktop-device} {
+            margin-right: 0;
+        } 
+        @media #{$tablet-device} {
+            margin-right: 0;
+            padding-left: 0;
+        } 
+        @media #{$large-mobile} {
+            margin-right: 0;
+            padding-left: 0;
+        } 
+        & .owl-nav{
+            position: absolute;
+            left: -56%;
+            bottom: 10px;
+            display: flex;
+            align-items: center;
+            @media #{$laptop-device} {
+                bottom: -25px;
+                left: -66%;
+            } 
+            @media #{$desktop-device} {
+                bottom: -40px;
+                left: -70%;
+            } 
+            @media #{$tablet-device} {
+                display: none;
+            } 
+            @media #{$large-mobile} {
+                display: none;
+            } 
+            & .owl-prev{
+                color: $white;
+                transition: $transition;
+                & i{
+                    font-size: 18px;
+                    margin-right: 6px;
+                }
+                & span{
+                    font-size: 16px;
+                    text-transform: uppercase;
+                }
+                &:hover{
+                    color: $primary;
+                }
+            }
+            & .owl-next{
+                color: $white;
+                margin-left: 80px;
+                position: relative;
+                transition: $transition;
+                &::before{
+                    position: absolute;
+                    content: '/';
+                    left: -43px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    font-size: 16px;
+                    color: $white;
+                }
+                & i{
+                    font-size: 18px;
+                    margin-left: 6px;
+                }
+                & span{
+                    font-size: 16px;
+                    text-transform: uppercase;
+                }
+                &:hover{
+                    color: $primary;
+                }
+            }
+        }
+    }
+    &__slider-item{
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+        z-index: 10;
+        @media #{$tablet-device} {
+            margin-top: 30px;
+        } 
+        @media #{$large-mobile} {
+            margin-top: 30px;
+        } 
+        &::before{
+            position: absolute;
+            content: '';
+            left: 0;
+            bottom: 0;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 100%;
+            background-image: url("../images/case-study/portfolio-style-two-hover-bg-shape.png");
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0;
+            visibility: hidden;
+            transition: $transition;
+            z-index: 2;
+        }
+        & .rs-item-content{
+            position: absolute;
+            left: -10px;
+            bottom: 25px;
+            z-index: 3;
+            opacity: 0;
+            visibility: hidden;
+            transition: all ease 0.3s;
+            @media #{$desktop-device} {
+                bottom: 10px;
+            } 
+            @media #{$tablet-device} {
+                bottom: 10px;
+            } 
+            @media #{$large-mobile} {
+                bottom: 10px;
+            } 
+            & .title{
+                color: $white;
+                font-size: 24px;
+                line-height: 30px;
+            }
+            & span{
+                color: $white;
+                font-size: 16px;
+                font-weight: 300;
+                font-family: $font-family-base;
+            }
+        }
+        & .rs-item-link{
+            position: absolute;
+            right: 0px;
+            bottom: 20px;
+            z-index: 3;
+            opacity: 0;
+            visibility: hidden;
+            transition: all ease 0.3s;
+            @media #{$laptop-device} {
+                bottom: 15px;
+            } 
+            @media #{$desktop-device} {
+                bottom: 10px;
+            } 
+            @media #{$tablet-device} {
+                bottom: 10px;
+            } 
+            @media #{$large-mobile} {
+                bottom: 10px;
+            } 
+            & a{
+                display: inline-block;
+                height: 70px;
+                width: 70px;
+                background: $white;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                @media #{$laptop-device} {
+                    height: 50px;
+                    width: 50px;
+                } 
+                @media #{$desktop-device} {
+                    height: 50px;
+                    width: 50px;
+                } 
+                @media #{$tablet-device} {
+                    height: 50px;
+                    width: 50px;
+                } 
+                @media #{$large-mobile} {
+                    height: 50px;
+                    width: 50px;
+                } 
+                & svg{
+                    height: 14px;
+                    width: 14px;
+                }
+            }
+        }
+        &:hover{
+            &::before{
+                opacity: 1;
+                visibility: visible;
+            }
+            & .rs-item-content{
+                opacity: 1;
+                visibility: visible;
+                left: 20px;
+            }
+            & .rs-item-link{
+                right: 20px;
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+    }
+}
+

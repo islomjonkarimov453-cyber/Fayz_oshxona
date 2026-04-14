@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="rs-breadcrumbs img1" style="background-image: url('{% static 'images/breadcrumbs/inner1.jpg' %}'); padding: 100px 0; text-align: center; background-color: #001a4b;">
+    <div class="container">
+        <div class="breadcrumbs-inner">
+            <h1 class="page-title" style="color: white;">
+                {% if request.path == '/about/' %} Maktab haqida
+                {% elif request.path == '/courses/' %}<br> Bizning Yo'nalishlar
+                {% elif request.path == '/contact/' %} Bog'lanish
+                {% endif %}
+            </h1><br>
+            <ul style="display: flex; justify-content: center; gap: 10px; color: #ff5e14; list-style: none;">
+                <li><a href="{% url 'index' %}" style="color: white;">Bosh sahifa</a></li>
+                <li>/</li>
+                <li>Sahifa</li>
+            </ul>
+        </div>
+    </div>
+</div>
+    <div class="container pt-100 pb-100">
+        <h1>"Bizning maktabimizda o'quv dasturlari faqat davlat standartlari bilan cheklanib qolmaydi. Biz har bir yo'nalishda xalqaro tajriba va zamonaviy texnologiyalarni uyg'unlashtirganmiz. Aniq fanlardan tortib, xorijiy tillar va raqamli texnologiyalargacha — barcha kurslarimiz bolaning mantiqiy fikrlashi, ijodiy yondashuvi va kelajakda nufuzli universitetlarga kirishini ta'minlashga qaratilgan. Malakali pedagoglar jamoasi har bir o'quvchi bilan individual shug'ullanib, ularning qiziqishlarini professional darajaga ko'tarishga yordam beradi."</h1>
+    </div>
+{% endblock %}

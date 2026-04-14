@@ -1,0 +1,246 @@
+<!doctype html>
+{% load static %}
+<html class="no-js" lang="en">
+
+<head>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.1.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/logo.1.png' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/logo' %}">
+    <meta name="msapplication-TileImage" content="{% static 'images/logo.1.png'%}">
+
+    <meta property="og:title" content="HACKATHON IT SCHOOL">
+    <meta property="og:image" content="{% static 'images/logo-white.png' %}">
+    <meta name="author" content="Hackathon IT School">
+
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>HACKATHON IT SCHOOL - WEBSITE</title>
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Hackathon IT School - Zamonaviy IT ta'lim markazi">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <style>
+            .rs-menu-area {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            height: 90px !important;
+            flex-wrap: nowrap !important;
+        }
+
+
+        .logo-area {
+            flex: 0 0 auto !important;
+            display: block !important;
+        }
+
+        .logo-area img {
+            height: 65px !important;
+            width: auto !important;
+            max-width: 280px !important;
+            object-fit: contain !important;
+            margin: 0 !important;
+        }
+
+        .rs-header-rightside {
+            display: flex !important;
+            align-items: center !important;
+            gap: 30px !important;
+        }
+
+        @media (max-width: 991px) {
+            .logo-area img {
+                height: 50px !important;
+            }
+        }
+
+        .nav-menu {
+            display: flex !important;
+            list-style: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 25px !important;
+        }
+
+        .nav-menu li a {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            white-space: nowrap !important;
+            font-size: 16px !important;
+        }
+
+        .rs-btn {
+            color: #ffffff !important;
+            border: 2px solid #ffffff !important;
+            background: transparent !important;
+            padding: 10px 22px !important;
+            border-radius: 5px !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+            transition: 0.3s !important;
+            display: inline-block !important;
+        .rs-breadcrumbs {
+    padding-top: 130px !important;
+    padding-bottom: 80px !important;
+}
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Flow+Circular&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animation.css' %}">
+    <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/remixicon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/slick.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flickity.css' %}">
+    <link rel="stylesheet" href="{% static 'css/odometer.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/skeletabs.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+    <link rel="stylesheet" href="{% static 'css/rs-layouts.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body class="home-page-2">
+
+    <div class="full-width-header rs-header-layout2">
+        <header id="rs-header" class="rs-header">
+            <div class="rs-header-topber">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="rs-flex-box">
+                                <div class="rs-header-topber-contact">
+                                    <ul>
+                                        <li>
+                                            <i class="fa fa-map-marker"></i>
+                                            <span>O'zbekiston, Farg'ona Hackathon IT School</span>
+                                        </li>
+                                        <li>
+                                            <i class="fa fa-envelope"></i>
+                                            <span>Email: <a href="mailto:info@itschool.uz">hackathonitschool.uz</a></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="rs-header-topber-social">
+                                    <span>Obuna bo'ling:</span>
+                                    <ul>
+                                        <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                                        <li><a href="#"><i class="ri-twitter-x-fill"></i></a></li>
+                                        <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
+                                        <li><a href="#"><i class="fa fa-instagram"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-area menu-sticky">
+    <div class="container">
+        <div class="rs-menu-area">
+            <div class="logo-area">
+                <a href="/">
+                    <img src="{% static 'images/logo.png' %}" alt="Hackathon IT School">
+                </a>
+            </div>
+
+            <div class="rs-header-rightside">
+                <nav class="main-menu">
+                    <ul class="nav-menu">
+                        <li><a href="{% url 'about' %}">Maktab haqida</a></li>
+                        <li><a href="{% url 'courses' %}">Yo'nalishlar</a></li>
+                        <li><a href="{% url 'contact' %}">Bog'lanish</a></li>
+                        </ul>
+                </nav>
+                <div class="header-btn">
+                    <a href="{% url 'contact' %}" class="rs-btn">Ro'yxatdan o'tish</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        </header>
+    </div>
+
+    {% block content %}
+    {% endblock content %}
+
+    <footer id="rs-contact" class="rs-footer rs-footer-2">
+        <div class="rs-footer__top">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="rs-footer__info-box">
+                            <div class="icon"><img src="{% static 'images/footer/info-3.png' %}" alt=""></div>
+                            <div class="content"><span>Telefon</span><a href="tel:+998200004371">+998 20 000-43-71</a></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="rs-footer__info-box">
+                            <div class="icon"><img src="{% static 'images/footer/info-1.png' %}" alt=""></div>
+                            <div class="content"><span>Email</span><a href="mailto:info@itschool.uz">Hackathonitschool.uz</a></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="rs-footer__info-box">
+                            <div class="icon"><img src="{% static 'images/footer/info-2.png' %}" alt=""></div>
+                            <div class="content"><span>Manzil</span><h4 class="title">Fergana UzSangwo Zavodi yonida</h4></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rs-footer__main-box pt-100 pb-100" style="background: #0a1121; color: white;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="footer-logo mb-30">
+                            <img src="{% static 'images/logo.png' %}" alt="Logo" style="max-width: 200px;">
+                        </div>
+                        <p>Hackathon IT School — yoshlarni zamonaviy texnologiyalar olamiga olib kiruvchi innovatsion ta'lim dargohi.</p>
+                    </div>
+                    <div class="col-lg-4">
+                        <h4 class="footer-title" style="color: white;">Foydali havolalar</h4>
+                        <ul class="footer-list" style="list-style: none; padding: 0;">
+                            <li><a href="#" style="color: #ccc;">Dars jadvali</a></li>
+                            <li><a href="#" style="color: #ccc;">O'qituvchilar</a></li>
+                            <li><a href="#" style="color: #ccc;">Galereya</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4">
+                        <h4 class="footer-title" style="color: white;">Yangiliklarga obuna bo'ling</h4>
+                        <form style="margin-top: 20px;">
+                            <input type="email" placeholder="Email manzilingiz" style="width: 100%; padding: 10px; border-radius: 5px; border: none;">
+                            <button class="main-btn mt-10" style="width: 100%;">Obuna bo'lish</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/wow.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <script>
+        window.addEventListener('load', function() {
+            var preloader = document.getElementById('pre-load');
+            if (preloader) {
+                preloader.style.transition = 'opacity 0.10000s ease';
+                preloader.style.opacity = '0';
+                setTimeout(function() { preloader.style.display = 'none'; }, 5000);
+            }
+        });
+    </script>
+
+</body>
+</html>

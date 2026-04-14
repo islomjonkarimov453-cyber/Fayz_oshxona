@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .rs-banner-2::before, .rs-banner-2::after { display: none !important; content: none !important; }
+    .rs-banner-2 .shape-img, .rs-banner-2 .bg-shape, .rs-banner-2 [class*="shape"] { display: none !important; }
+    .rs-banner-2 {
+        height: 100vh !important;
+        min-height: 750px !important;
+        display: flex !important;
+        align-items: center !important;
+        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                          url("{% static 'images/banner/banner1.png' %}") !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        margin-top: 0px !important;
+        padding: 0px !important;
+        color: white !important;
+    }
+    .rs-banner-2__content .title {
+        font-size: clamp(30px, 6vw, 65px) !important;
+        font-weight: 850 !important;
+        line-height: 1.3 !important;
+        color: #ffffff !important;
+        text-shadow: 2px 4px 10px rgba(0,0,0,0.4) !important;
+        margin-bottom: 25px !important;
+    }
+    .rs-banner-2__content .main-btn {
+        background: linear-gradient(90deg, #ff5e14, #ff8c00) !important;
+        border: none !important;
+        padding: 15px 40px !important;
+        font-weight: 700 !important;
+        border-radius: 5px !important;
+        box-shadow: 0 10px 20px rgba(255, 94, 20, 0.3) !important;
+        cursor: pointer;
+        color: white;
+    }
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        z-index: 99999;
+        justify-content: center; align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 40px;
+        border-radius: 25px;
+        width: 90%; max-width: 450px;
+        position: relative;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        animation: modalFadeIn 0.4s ease-out;
+    }
+    @keyframes modalFadeIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #999; }
+    .modal-input { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #eee; border-radius: 8px; outline: none; background: #f9f9f9; }
+    .container { max-width: 1320px !important; width: 100% !important; }
+    .service-card-modern {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 25px;
+        padding: 40px 30px;
+        height: 100%;
+        transition: all 0.4s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .service-card-modern:hover { transform: translateY(-10px); background: rgba(255, 255, 255, 1); border-color: #ff5e14; }
+</style>
+
+<section class="rs-banner-2">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <div class="rs-banner-2__content" style="position: relative; z-index: 10;">
+                    <div class="wow fadeInUp" data-wow-delay="0.4s" style="margin-bottom: 20px;">
+                        <span style="color: #ff5e14; font-weight: bold; background: rgba(255,94,20,0.1); padding: 5px 15px; border-radius: 50px;">🚀 HACKATHON IT SCHOOL</span>
+                    </div>
+                    <h1 class="title wow fadeInUp" data-wow-delay="0.8s">{{ banner.title|safe }}</h1>
+                    <p class="wow fadeInUp" data-wow-delay="1.2s">{{ banner.description }}</p><br>
+                    <button id="openModal" class="main-btn wow fadeInUp" data-wow-delay="1.6s">Qabulga yozilish <i class="fa fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="rs-service-2 pt-110 pb-120">
+    <div class="container">
+        <div class="row g-4">
+            {% for service in services %}
+            <div class="col-lg-4 col-md-6">
+                <a href="{% url 'service_detail' service.slug %}" style="text-decoration: none; color: inherit;">
+                    <div class="service-card-modern">
+                        <div style="width: 85px; height: 85px; background: #fff4f0; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px;">
+                            <img src="{{ service.icon.url }}" alt="{{ service.title }}" style="width: 50px;">
+                        </div>
+                        <h4 style="font-size: 24px; font-weight: 800; color: #002147; margin-bottom: 15px;">{{ service.title }}</h4>
+                        <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">{{ service.short_description|truncatechars:100 }}</p>
+                        <div style="font-weight: 700; color: #ff5e14; text-transform: uppercase; font-size: 14px;">Batafsil ma'lumot →</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if blogs %}
+<section id="rs-blog" class="rs-featured-2 pt-115 pb-120" style="background: #fcfcfc;">
+    <div class="container">
+        <div class="row mb-50">
+            <div class="col-lg-12 text-center">
+                <h2 style="font-size: 40px; font-weight: 900; color: #002147;">SO'NGGI YANGILIKLAR</h2>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for blog in blogs %}
+            <div class="col-lg-4 col-md-6">
+                <div class="rs-featured-2__item" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%;">
+                    {% if blog.image %}
+                    <a href="{% url 'blog_detail' blog.pk %}">
+                        <img src="{{ blog.image.url }}" alt="{{ blog.title }}" style="width: 100%; height: 250px; object-fit: cover;">
+                    </a>
+                    {% endif %}
+                    <div style="padding: 40px;">
+                        <span style="background: #ff5e14; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;">{{ blog.category.name }}</span>
+                        <h4 style="margin: 20px 0 15px; font-weight: 800;">
+                            <a href="{% url 'blog_detail' blog.pk %}" style="color: #002147; text-decoration: none;">{{ blog.title }}</a>
+                        </h4>
+                        <p style="color: #666;">{{ blog.description|truncatechars:120 }}</p>
+                        <a href="{% url 'blog_detail' blog.pk %}" style="color: #ff5e14; font-weight: 700; text-decoration: none;">Batafsil <i class="fa fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="rs-choose-us pt-120 pb-120">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="rs-section-title mb-40">
+                    <span style="color: #ff5e14; font-weight: bold;">Nega bizni tanlashadi?</span>
+                    <h2 style="font-size: 42px; font-weight: 900; color: #0a1121; margin-top: 15px;">Maktabimizda 15 yillik tajribaga asoslangan ta'lim tizimi</h2>
+                    <p style="color: #666; margin-top: 25px; font-size: 17px;">Biz har bir o'quvchining qobiliyatini yuzaga chiqarish uchun zamonaviy metodika va individual yondashuvdan foydalanamiz.</p>
+                </div>
+                <div class="rs-skill-bar">
+                    <div class="rs-skill-item mb-30">
+                        <div style="display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px;">
+                            <span>Oliy ma'lumotli ustozlar</span>
+                            <span style="background: #002147; color: white; padding: 2px 8px; border-radius: 4px;">95%</span>
+                        </div>
+                        <div style="background: #fdf0ea; height: 10px; border-radius: 10px;"><div style="width: 95%; background: #ff5e14; height: 100%; border-radius: 10px;"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-4">
+                    <div class="col-6"><img src="{% static 'images/oquvchilar.png' %}" style="width: 100%; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);"></div>
+                    <div class="col-6" style="margin-top: 60px;">
+                        <img src="{% static 'images/dars.png' %}" style="width: 100%; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 25px;">
+                        <div style="background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 20px;">
+                            <h4 style="margin: 0; font-size: 18px; font-weight: 900; color: #002147;">{{ contact_info.phone }}<br><span style="font-size: 13px; color: #666; font-weight: normal;">{{ contact_info.location }}</span></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
+        <span id="closeModal" class="close-btn">&times;</span>
+        <div style="text-align: center; margin-bottom: 25px;"><h2 style="font-size: 24px; font-weight: 900; color: #002147;">Qabulga yozilish</h2></div>
+        <form method="POST" action="{% url 'contact' %}">
+            {% csrf_token %}
+            <input type="text" name="name" placeholder="Ismingiz" required class="modal-input">
+            <input type="text" name="phone" placeholder="Telefoningiz" required class="modal-input">
+            <textarea name="message" placeholder="Savolingiz..." required class="modal-input" style="height: 100px; resize: none;"></textarea>
+            <button type="submit" style="width: 100%; background: #ff5e14; color: white; border: none; padding: 15px; font-weight: 700; border-radius: 8px; cursor: pointer;">Yuborish</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById("modalOverlay");
+    const openBtn = document.getElementById("openModal");
+    const closeBtn = document.getElementById("closeModal");
+    openBtn.onclick = function() { modal.style.display = "flex"; document.body.style.overflow = "hidden"; }
+    closeBtn.onclick = function() { modal.style.display = "none"; document.body.style.overflow = "auto"; }
+    window.onclick = function(event) { if (event.target == modal) { modal.style.display = "none"; document.body.style.overflow = "auto"; } }
+</script>
+{% endblock %}

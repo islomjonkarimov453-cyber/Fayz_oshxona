@@ -1,0 +1,105 @@
+/*----------------------------------------*/
+/*  03.19 - Work Process
+/*----------------------------------------*/
+
+.rs-work-process-6{
+    .rs-section-title-4{
+        text-align: left;
+    }
+    &__content{
+        padding-right: 50px;
+        @media #{$extra-minBig-device-2} {
+          padding-right: 0;
+        } 
+        & .rs-section-title-4{
+            margin-bottom: 30px;
+        }
+    }
+    &__item{
+        display: flex;
+        align-items: center;
+        margin-bottom: 28px;
+        & .rs-thumb{
+            height: 80px;
+            width: 83px;
+            min-width: 83px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url(../images/progress/icon_bg.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin-right: 20px;
+            & img{
+                width: 40px;
+                margin: -5px 0px 0px 7px;
+            }
+        }
+        & .rs-content{
+            & .title{
+                font-size: 28px;
+                font-weight: 700;
+                color: $heading-color-2;
+            }
+            & p{
+                font-size: 16px;
+                line-height: 26px;
+                margin-top: 8px;
+            }
+        }
+    }
+    &__thumb{
+        text-align: right;
+        position: relative;
+        @media #{$tablet-device} {
+          margin-top: 30px;
+        } 
+        @media #{$large-mobile} {
+          margin-top: 30px;
+        } 
+        & .rs-shape-1{
+            position: absolute;
+            top: 0;
+            right: 0;
+            -webkit-animation: translateor2 8s linear infinite;
+            animation: translateor2 8s linear infinite;
+            @media #{$small-mobile} {
+              position: static;
+              text-align: left;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              animation: none;
+            } 
+          
+        }
+        & .rs-shape-2{
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            -webkit-animation: translateor2 8s linear 0.5s infinite;
+            animation: translateor2 8s linear 0.5s infinite;
+            @media #{$small-mobile} {
+              position: static;
+              text-align: left;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              animation: none;
+            } 
+        }
+        & .rs-shape-3{
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            -webkit-animation: translateor2 8s linear 1s infinite;
+            animation: translateor2 8s linear 1s infinite;
+            @media #{$small-mobile} {
+              position: static;
+              text-align: left;
+              margin-top: 15px;
+              margin-bottom: 15px;
+              animation: none;
+            } 
+        }
+    }
+}

@@ -1,0 +1,54 @@
+/*----------------------------------------*/
+/*  01. Helpers CSS
+/*----------------------------------------*/
+
+// Font Family
+$banner-base: "Urbanist", sans-serif;
+$font-family-base: "Urbanist", sans-serif;
+$headings-font-family: "Urbanist", sans-serif;
+
+
+
+
+// Responsive Variables
+$extraBig-device: "only screen and (min-width: 1550px)";
+$extra-minBig-device: "only screen and (max-width: 1800px)";
+$extra-minBig-device-2: "only screen and (max-width: 1599px)";
+$laptop-device: "only screen and (min-width: 1200px) and (max-width: 1549px)";
+$desktop-device: "only screen and (min-width: 992px) and (max-width: 1199px)";
+$tablet-device: "only screen and (min-width: 768px) and (max-width: 991px)";
+$large-mobile: "only screen and (max-width: 767px)";
+$small-mobile: "only screen and (max-width: 575px)";
+$extra-small-mobile: "only screen and (max-width: 479px)";
+
+//===============================
+// Bootstrap Variables Overright
+//===============================
+
+// Color
+$primary: #F26F20;
+$secondary: rgb(96,55,249);
+$success: #4caf50;
+$danger: #f44336;
+$warning: #ffc107;
+$info: #17a2b8;
+$light: #f8f9fa;
+$dark: #0a0a0a;
+//
+$text-color: #454545;
+$heading-color: #0a0a0a;
+$heading-color-2: #002559;
+$theme-color-2:#F26F20;
+$theme-color-3:#FC3737;
+$dark:#0a0a0a;
+$dark-2:#010047 ;
+//
+$white: #ffffff;
+$black: #000000;
+$grey: #f8f9fd;
+
+
+// transtion
+
+$transition: all linear 0.3s;
+$transition-ease: all ease 0.3s;

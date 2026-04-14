@@ -1,0 +1,456 @@
+/*----------------------------------------*/
+/*  03.08 - Progress
+/*----------------------------------------*/
+
+.rs-progress{
+    background-image: url(../images/progress/map_image_bg.png);
+    position: relative;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center 120px;
+    padding-bottom: 355px;
+    & .row{
+        & .col-lg-3{
+            padding: 0px;
+        }
+    }
+    & .rs-section-title{
+        text-align: center;
+    }
+    &__item-box{
+        position: relative;
+        z-index: 10;
+        margin-top: 55px;
+        @media #{$tablet-device} {
+            margin-top: 30px;
+        } 
+        @media #{$large-mobile} {
+            margin-top: 30px;
+        } 
+        & .rs-progress-line{
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            @media #{$desktop-device} {
+                display: none;
+            } 
+            @media #{$tablet-device} {
+                display: none;
+            } 
+            @media #{$large-mobile} {
+                display: none;
+            } 
+        }
+        &.item-2{
+            & .rs-progress-line{
+                top: auto;
+                bottom: -40px;
+            }
+            & .rs-progress__item{
+                background-color: #0070E2;
+                &:hover{
+                   transform: translateY(-10px);
+                }
+            }
+        }
+        &.item-3{
+            & .rs-progress__item{
+                background-color: #7B3DD9;
+            }
+        }
+        &.item-4{
+            & .rs-progress-line{
+                top: auto;
+                bottom: -40px;
+                @media #{$desktop-device} {
+                    display: none;
+                } 
+            }
+            & .rs-progress__item{
+                background-color: #00B59A;
+                &:hover{
+                   transform: translateY(-10px);
+                }
+            }
+        }
+    }
+    &__item{
+         margin: 25px 70px 0 20px;
+         border: 6px solid #EFEBF6;
+         border-radius: 10px;
+         background: #FC5732;
+         padding: 35px 25px 30px 25px;
+         position: relative;
+         top: 20px;
+         text-align: center;
+         background-image: url(../images/progress/step_flow_shape_one.png);
+         background-repeat: no-repeat;
+         background-position: top center;
+         transition: $transition;
+         @media #{$laptop-device} {
+            margin: 25px 52px 0 15px;
+        } 
+         @media #{$desktop-device} {
+            margin: 0 10px;
+        } 
+         @media #{$tablet-device} {
+            margin: 0 10px;
+        } 
+         @media #{$large-mobile} {
+            margin: 0 10px;
+        } 
+         & .icon{
+            display: inline-block;
+            transition: all linear 0.5s;
+         }
+         & .title{
+            font-size: 24px;
+            line-height: 50px;
+            font-weight: 700;
+            color: $white;
+            margin-bottom: 5px;
+         }
+         & p{
+            color: $white;
+            line-height: 1.6;
+            font-size: 16px;
+         }
+         &:hover{
+            transform: translateY(10px);
+            @media #{$desktop-device} {
+                transform:none !important;
+            } 
+            @media #{$tablet-device} {
+                transform:none !important;
+            } 
+            @media #{$large-mobile} {
+                transform:none !important;
+            } 
+            & .icon{
+                transform: rotateY(360deg);
+            }
+         }
+    }
+}
+
+
+
+.rs-progress-3{
+    position: relative;
+    z-index: 10;
+    @media #{$small-mobile} { 
+        padding-bottom: 80px;
+        padding-top: 80px;
+    }
+    &__item{
+        text-align: center;
+        margin-top: 35px;
+        &:hover{
+            & .rs-progress-3__thumb {
+                & span{
+                    color: $white;
+                    &::before{
+                        opacity: 1;
+                    }
+                }
+            } 
+        }
+        &.item-2{
+            & .rs-progress-3__thumb{
+                & span{
+                    left: 20px;
+                    top: 160px;
+                    @media #{$tablet-device} {
+                        left: 35px;
+                    }
+                }
+                & .rs-shape{
+                    margin-top: 0;
+                    margin-bottom: -122px;
+                    @media #{$extra-minBig-device-2} {
+                        margin-bottom: -108px;
+                    }
+                    @media #{$desktop-device} {
+                        margin-bottom: -95px;
+                    }
+                }
+            }
+        }
+    }
+    &__thumb{
+        display: inline-block;
+        position: relative;
+        & span{
+            position: absolute;
+            left: 20px;
+            top: 50px;
+            height: 45px;
+            width: 45px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: $white;
+            border-radius: 50%;
+            font-size: 22px;
+            font-weight: 700;
+            color: $heading-color-2;
+            transition: $transition;
+            overflow: hidden;
+            z-index: 10;
+            @media #{$tablet-device} {
+                left: 35px;
+            }
+            &::before{
+                position: absolute;
+                content: '';
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 100%;
+                z-index: -1;
+                opacity: 0;
+                transition: $transition;
+                background-image: linear-gradient(130deg, rgba(12,67,254,1) 0%, rgba(252,55,55,1) 100%);
+            }
+        }
+        &  > img{
+            border-radius: 50%;
+            width: 235px;
+            @media #{$extra-minBig-device-2} {
+                padding: 0 15px;
+            }
+        }
+        & .rs-shape{
+            margin-top: -122px;
+            @media #{$extra-minBig-device-2} {
+                margin-top: -108px;
+            }
+            @media #{$desktop-device} {
+                margin-top: -95px;
+            }
+        }
+    }
+    &__content{
+        padding-top: 36px;
+        & .title{
+            font-size: 22px;
+            color: $dark-2;
+            margin-bottom: 10px;
+        }
+        & p{
+            @media #{$extra-minBig-device-2} {
+                font-size: 16px;
+            }
+        }
+    }
+    & .rs-shape-1{
+        position: absolute;
+        left: 60px;
+        top: 135px;
+        z-index: -1;
+        width: 80px;
+        -webkit-animation: translateor2 4s linear infinite;
+        animation: translateor2 4s linear infinite;
+        @media #{$small-mobile} { 
+            display: none;
+        }
+    }
+    & .rs-shape-2{
+        position: absolute;
+        right: 60px;
+        top: 135px;
+        z-index: -1;
+        width: 20px;
+        -webkit-animation: translateor3 4s linear infinite;
+        animation: translateor3 4s linear infinite;
+        @media #{$small-mobile} { 
+            display: none;
+        }
+    }
+    &.rs-progress-4{
+        background-image: url(../images/working-process-bg.png);
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center center;
+        & .section-title-3{
+            text-align: center;
+            padding: 0 50px;
+            @media #{$large-mobile} { 
+                padding: 0;
+            }
+        }
+        & .rs-progress-4__item{
+            & .rs-progress-3__thumb{
+                & span{
+                    color: $theme-color-2;
+                }
+            }
+            & .rs-progress-3__content{
+                & .title{
+                    color: $heading-color;
+                }
+            }
+            &:hover{
+                & .rs-progress-3__thumb{
+                    & span{
+                        color: $white;
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+
+
+
+.rs-progress-6{
+    & .rs-section-title-4{
+        margin-bottom: 38px;
+    }
+    &__tabs{
+        & .skltbs-tab-group{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            &::after{
+                display: none;
+            }
+            & li{
+                width: 100%;
+                margin: 0;
+                & button{
+                    width: 100%;
+                    background: $heading-color-2;
+                    color: $white;
+                    font-size: 24px;
+                    font-weight: 700;
+                    font-family: $headings-font-family;
+                    padding: 50px 0;
+                    transition: $transition;
+                    @media #{$tablet-device} {
+                      font-size: 18px;
+                    } 
+                    @media #{$large-mobile} {
+                      font-size: 18px;
+                    } 
+                    &:hover,
+                    &.skltbs-active{
+                        background: $primary;
+                    }
+                }
+            }
+        }
+        & .skltbs-panel-group{
+            & .skltbs-panel {
+                padding: 70px 0 0;
+                border: 0;
+                & .rs-tab-content{
+                    padding-right: 70px;
+                    @media #{$extra-minBig-device-2} {
+                      padding-right: 0;
+                    } 
+                    @media #{$tablet-device} {
+                      margin-bottom: 60px;
+                    } 
+                    @media #{$large-mobile} {
+                      margin-bottom: 60px;
+                    } 
+                    & .title{
+                        font-size: 36px;
+                        line-height: 1.278em;
+                        color: $heading-color-2;
+                    }
+                    & p{
+                        font-size: 16px;
+                        font-weight: 500;
+                        color: #54595F;
+                        line-height: 26px;
+                        margin-top: 30px;
+                    }
+                    & a{
+                        background: #4640DE;
+                        color: $white;
+                        border-radius: 5px;
+                        padding: 20px 20px 20px 20px;
+                        font-size: 16px;
+                        font-weight: 500;
+                        margin-top: 43px;
+                        transition: $transition;
+                        &:hover{
+                            background: #534ff8;
+                        }
+                    }
+                    & .rs-progress-top-featured{
+                        padding-top: 37px;
+                        & span{
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #112437;
+                            text-decoration: underline;
+                            text-transform: capitalize;
+                            display: block;
+                            margin-bottom: 33px;
+                        }
+                        & .rs-progress-list{
+                            display: flex;
+                            gap: 90px;
+                            flex-wrap: wrap;
+                            @media #{$extra-minBig-device-2} {
+                              flex-direction: column;
+                              gap: 20px;
+                            } 
+                            & ul{
+                                & li{
+                                    padding-left: 45px;
+                                    position: relative;
+                                    margin-bottom: 28px;
+                                    font-size: 16px;
+                                    font-weight: 500;
+                                    color: #54595F;
+                                    &::before{
+                                        position: absolute;
+                                        content: "";
+                                        left: 0;
+                                        top: 0;
+                                        width: 30px;
+                                        height: 30px;
+                                        background-repeat: no-repeat;
+                                        background-position: 50%;
+                                        background-image: url(../images/service/blue-tick.png);
+                                        background-size: 15px;
+                                        background-color: #fff;
+                                        border-radius: 50%;
+                                        box-shadow: 0 0 18px rgba(0,0,0,.1);
+                                    }
+                                    &:last-child{
+                                        margin-bottom: 10px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    & .skltbs-theme-light {
+        & .skltbs-tab{
+            background: $heading-color-2;
+            color: $white;
+            &.skltbs-active{
+                background: #4640DE;
+                border-color: #4640DE;
+            }
+        }
+        & .skltbs-panel{
+            & .rs-thumb{
+                padding-bottom: 30px;
+            }
+
+        }
+    }
+}
+
