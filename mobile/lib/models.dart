@@ -53,6 +53,38 @@ class TableData {
       );
 }
 
+/// Admin tomonidan kiritilgan baliq og'irligi (kg).
+class FishStock {
+  const FishStock({required this.id, required this.key, required this.kg});
+
+  final int id;
+  final String key;
+  final double kg;
+
+  factory FishStock.fromJson(Map<String, dynamic> json) => FishStock(
+        id: asInt(json['id']),
+        key: (json['key'] ?? '').toString(),
+        kg: asDouble(json['kg']),
+      );
+}
+
+/// Oshpazga boradigan baliq tafsiloti: turi, og'irligi va piyoz turi.
+class FishOrder {
+  const FishOrder({required this.key, required this.kg, required this.onion});
+
+  final String key;
+  final double kg;
+  final String onion;
+
+  factory FishOrder.fromJson(Map<String, dynamic> json) => FishOrder(
+        key: (json['key'] ?? '').toString(),
+        kg: asDouble(json['kg']),
+        onion: (json['onion'] ?? '').toString(),
+      );
+
+  String get onionLabel => onion == 'sovusli' ? 'Sovusli' : 'Sovussiz';
+}
+
 class Ticket {
   const Ticket({
     required this.id,
@@ -63,6 +95,7 @@ class Ticket {
     required this.accepted,
     required this.seen,
     this.doneAt,
+    this.fishOrders = const [],
   });
 
   final int id;
@@ -73,17 +106,30 @@ class Ticket {
   final bool accepted;
   final bool seen;
   final int? doneAt;
+  final List<FishOrder> fishOrders;
 
-  factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
-        id: asInt(json['id']),
-        table: (json['table'] ?? '').toString(),
-        items: itemsFrom(json['items']),
-        time: asInt(json['time']),
-        done: asBool(json['done']),
-        accepted: asBool(json['acc']),
-        seen: asBool(json['seen']),
-        doneAt: json['doneAt'] == null ? null : asInt(json['doneAt']),
-      );
+  factory Ticket.fromJson(Map<String, dynamic> json) {
+    final fishOrders = <FishOrder>[];
+    final rawItems = json['items'];
+    if (rawItems is Map && rawItems['_fish'] is List) {
+      for (final entry in rawItems['_fish'] as List) {
+        if (entry is Map) {
+          fishOrders.add(FishOrder.fromJson(Map<String, dynamic>.from(entry)));
+        }
+      }
+    }
+    return Ticket(
+      id: asInt(json['id']),
+      table: (json['table'] ?? '').toString(),
+      items: itemsFrom(json['items']),
+      time: asInt(json['time']),
+      done: asBool(json['done']),
+      accepted: asBool(json['acc']),
+      seen: asBool(json['seen']),
+      doneAt: json['doneAt'] == null ? null : asInt(json['doneAt']),
+      fishOrders: fishOrders,
+    );
+  }
 
   bool get readyForWaiter => done && !seen;
 }
@@ -138,6 +184,7 @@ class AppSnapshot {
     required this.seq,
     required this.seqS,
     required this.rev,
+    required this.fishList,
   });
 
   final Map<String, double> prices;
@@ -148,6 +195,7 @@ class AppSnapshot {
   final int seq;
   final int seqS;
   final int rev;
+  final List<FishStock> fishList;
 
   static const empty = AppSnapshot(
     prices: {},
@@ -158,6 +206,7 @@ class AppSnapshot {
     seq: 1,
     seqS: 0,
     rev: 0,
+    fishList: [],
   );
 
   factory AppSnapshot.fromJson(Map<String, dynamic> json) {
@@ -192,6 +241,16 @@ class AppSnapshot {
       }
     }
 
+    final rawFishList = json['fishList'];
+    final fishList = <FishStock>[];
+    if (rawFishList is List) {
+      for (final entry in rawFishList) {
+        if (entry is Map) {
+          fishList.add(FishStock.fromJson(Map<String, dynamic>.from(entry)));
+        }
+      }
+    }
+
     return AppSnapshot(
       prices: itemsFrom(json['prices']),
       service: asDouble(json['service'], 10),
@@ -201,6 +260,7 @@ class AppSnapshot {
       seq: asInt(json['seq'], 1),
       seqS: asInt(json['seqS']),
       rev: asInt(json['_rev'] ?? json['rev']),
+      fishList: fishList,
     );
   }
 

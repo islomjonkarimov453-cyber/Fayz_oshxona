@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../constants.dart';
+import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -23,6 +24,7 @@ class OrderEditorScreen extends StatefulWidget {
 
 class _OrderEditorScreenState extends State<OrderEditorScreen> {
   final Map<String, double> _draft = {};
+  final List<Map<String, dynamic>> _fishOrders = [];
   final TextEditingController _address = TextEditingController();
   bool _fishPicker = false;
   bool _busy = false;
@@ -118,6 +120,32 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     );
   }
 
+  /// Baliq tanlangach: sovusli/sovussiz so'raladi, tanlov oshpazga boradi.
+  Future<void> _askOnion(String key, double kg) async {
+    final onion = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${productName(key)} — ${quantityText(kg)} kg'),
+        content: const Text('Qanday tayyorlaymiz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('sovussiz'),
+            child: const Text('Sovussiz'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop('sovusli'),
+            child: const Text('Sovusli'),
+          ),
+        ],
+      ),
+    );
+    if (onion == null || !mounted) return;
+    setState(() {
+      _draft[key] = round2((_draft[key] ?? 0) + kg);
+      _fishOrders.add({'key': key, 'kg': kg, 'onion': onion});
+    });
+  }
+
   Future<void> _send() async {
     if (_busy || _newSubtotal <= 0) return;
     setState(() => _busy = true);
@@ -129,6 +157,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       final quantity = draft[key] ?? 0;
       if (quantity > 0) fish[key] = quantity;
     }
+    final fishOrders = _fishOrders.isEmpty
+        ? null
+        : List<Map<String, dynamic>>.from(_fishOrders);
 
     try {
       await _store.mutate(() async {
@@ -138,11 +169,14 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           address: _address.text.trim(),
         );
         if (fish.isNotEmpty) {
-          await _store.createTicket(_key, fish);
+          await _store.createTicket(_key, fish, fishOrders: fishOrders);
         }
       });
       if (!mounted) return;
-      setState(_draft.clear);
+      setState(() {
+        _draft.clear();
+        _fishOrders.clear();
+      });
       showMessage(
         context,
         fish.isEmpty ? 'Buyurtma saqlandi' : 'Oshxonaga yuborildi 🐟',
@@ -265,10 +299,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                 pickerOpen: _fishPicker,
                 onTogglePicker: () =>
                     setState(() => _fishPicker = !_fishPicker),
-                onAdd: (key) {
-                  _change(key, 0.5);
-                  setState(() => _fishPicker = false);
-                },
+                onPickFish: (entry) => _askOnion(entry.key, entry.kg),
+                onQuickAdd: (key) => _askOnion(key, 0.5),
               ),
               const SizedBox(height: 8),
               Container(
@@ -502,22 +534,57 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 }
 
-class _FishSection extends StatelessWidget {
+class _FishSection extends StatefulWidget {
   const _FishSection({
     required this.store,
     required this.pickerOpen,
     required this.onTogglePicker,
-    required this.onAdd,
+    required this.onPickFish,
+    required this.onQuickAdd,
   });
 
   final AppStore store;
   final bool pickerOpen;
   final VoidCallback onTogglePicker;
-  final ValueChanged<String> onAdd;
+  final ValueChanged<FishStock> onPickFish;
+  final ValueChanged<String> onQuickAdd;
+
+  @override
+  State<_FishSection> createState() => _FishSectionState();
+}
+
+class _FishSectionState extends State<_FishSection> {
+  final TextEditingController _kgController = TextEditingController();
+  List<FishStock> _results = [];
+  bool _searched = false;
+
+  @override
+  void dispose() {
+    _kgController.dispose();
+    super.dispose();
+  }
+
+  void _search() {
+    final text = _kgController.text.trim().replaceAll(',', '.');
+    final kg = double.tryParse(text);
+    setState(() {
+      _searched = true;
+      if (kg == null || kg <= 0) {
+        _results = [];
+        return;
+      }
+      _results = widget.store.snapshot.fishList
+          .where((entry) => (entry.kg - kg).abs() <= 0.5)
+          .toList()
+        ..sort((a, b) => (a.kg - kg).abs().compareTo((b.kg - kg).abs()));
+      if (_results.length > 6) _results = _results.sublist(0, 6);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
+    final store = widget.store;
     return Column(
       children: [
         Row(
@@ -533,16 +600,16 @@ class _FishSection extends StatelessWidget {
               ),
             ),
             TextButton.icon(
-              onPressed: onTogglePicker,
+              onPressed: widget.onTogglePicker,
               icon: Icon(
-                pickerOpen ? Icons.expand_less : Icons.expand_more,
+                widget.pickerOpen ? Icons.expand_less : Icons.expand_more,
                 size: 20,
               ),
               label: const Text('Baliq qo\'shish'),
             ),
           ],
         ),
-        if (pickerOpen)
+        if (widget.pickerOpen)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
@@ -551,37 +618,130 @@ class _FishSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: palette.line),
             ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: fishKeys.map((key) {
-                final def = productByKey(key);
-                return OutlinedButton(
-                  onPressed: () => onAdd(key),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _kgController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                        ],
+                        decoration: const InputDecoration(
+                          hintText: 'Og\'irligi (kg), masalan 1.3',
+                          isDense: true,
+                        ),
+                        onSubmitted: (_) => _search(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: _search,
+                      icon: const Icon(Icons.search, size: 18),
+                      label: const Text('Qidirish'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_searched && _results.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      '😕 Bunday og\'irlikdagi baliq yo\'q',
+                      style: TextStyle(
+                        color: palette.bad,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  )
+                else if (_results.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _results.map((entry) {
+                      final def = productByKey(entry.key);
+                      return OutlinedButton(
+                        onPressed: () => widget.onPickFish(entry),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              def.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              '${quantityText(entry.kg)} kg · ${money(store.price(entry.key))} so\'m/kg',
+                              style: TextStyle(
+                                color: palette.mut,
+                                fontSize: 10.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                if (!_searched)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      'Admin kiritgan baliq og\'irligini yozing',
+                      style: TextStyle(color: palette.mut, fontSize: 11.5),
                     ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        def.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        '${money(store.price(key))} so\'m/kg',
-                        style: TextStyle(
-                          color: palette.mut,
-                          fontSize: 10.5,
+                const SizedBox(height: 8),
+                Text(
+                  'yoki tez qo\'shish:',
+                  style: TextStyle(color: palette.mut, fontSize: 11.5),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: fishKeys.map((key) {
+                    final def = productByKey(key);
+                    return OutlinedButton(
+                      onPressed: () => widget.onQuickAdd(key),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            def.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            '+0.5 kg',
+                            style: TextStyle(
+                              color: palette.mut,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
       ],

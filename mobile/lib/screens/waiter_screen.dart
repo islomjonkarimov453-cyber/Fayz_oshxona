@@ -93,7 +93,7 @@ class _WaiterScreenState extends State<WaiterScreen> {
                         context,
                         store,
                         () => store.seenTicket(ticket.id),
-                        successText: 'Olib borildi',
+                        successText: 'Zakaz yetkazildi',
                       ),
                     )),
                 const SizedBox(height: 6),

@@ -89,6 +89,7 @@ def load_state_from_db():
         'seq': app_state.seq,
         'seqS': app_state.seq_s,
         'service': app_state.service,
+        'fishList': app_state.fish_list or [],
         '_rev': app_state._rev,
     }
 
@@ -98,6 +99,7 @@ def save_state_to_db(state, app_state, rev):
     app_state.service = as_int(state.get('service'), 10)
     app_state.seq = as_int(state.get('seq'), 1)
     app_state.seq_s = as_int(state.get('seqS'), 0)
+    app_state.fish_list = state.get('fishList') or state.get('fish_list') or []
     app_state._rev = rev
     app_state.save()
 
@@ -154,6 +156,39 @@ def save_state_to_db(state, app_state, rev):
         sale.prices = data.get('prices') or {}
         sale.save()
     Sale.objects.exclude(id__in=keep_sales).delete()
+
+
+def consume_fish_list(items):
+    """Ticket items ichidagi _fish tafsilotlariga ko'ra AppState.fish_list'dan mos elementlarni o'chiradi."""
+    details = (items or {}).get('_fish')
+    if not isinstance(details, list) or not details:
+        return False
+    app_state = AppState.get_state()
+    fish_list = list(app_state.fish_list or [])
+    changed = False
+    for detail in details:
+        if not isinstance(detail, dict):
+            continue
+        key = detail.get('key')
+        try:
+            kg = float(detail.get('kg') or 0)
+        except (TypeError, ValueError):
+            continue
+        for index, entry in enumerate(fish_list):
+            entry = entry or {}
+            try:
+                entry_kg = float(entry.get('kg') or 0)
+            except (TypeError, ValueError):
+                continue
+            if entry.get('key') == key and abs(entry_kg - kg) < 0.001:
+                fish_list.pop(index)
+                changed = True
+                break
+    if changed:
+        app_state.fish_list = fish_list
+        app_state.save(update_fields=['fish_list'])
+        bump_revision()
+    return changed
 
 
 def bump_revision():

@@ -35,6 +35,7 @@ from .state import (
     OTHER_KEYS,
     PRODUCT_LABELS,
     bump_revision,
+    consume_fish_list,
     load_state_from_db,
     notify_subscribers,
 )
@@ -150,6 +151,11 @@ class OrderViewSet(RevisionMixin, viewsets.ModelViewSet):
 
 class TicketViewSet(RevisionMixin, viewsets.ModelViewSet):
     serializer_class = TicketSerializer
+
+    def perform_create(self, serializer):
+        ticket = serializer.save()
+        consume_fish_list(ticket.items)
+        bump_revision()
 
     def get_queryset(self):
         queryset = Ticket.objects.order_by('id')

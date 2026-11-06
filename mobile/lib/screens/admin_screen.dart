@@ -664,6 +664,11 @@ class _SettingsTab extends StatefulWidget {
 class _SettingsTabState extends State<_SettingsTab> {
   late final Map<String, TextEditingController> _priceControllers;
   late final TextEditingController _serviceController;
+  late final TextEditingController _fishKgController;
+  late final List<Map<String, dynamic>> _fishEntries;
+  String _fishKey = 'sazan';
+  bool _fishDirty = false;
+  String _lastFishSync = '';
 
   @override
   void initState() {
@@ -678,6 +683,34 @@ class _SettingsTabState extends State<_SettingsTab> {
     _serviceController = TextEditingController(
       text: quantityText(snapshot.service),
     );
+    _fishKgController = TextEditingController();
+    _fishEntries = [
+      for (final entry in snapshot.fishList)
+        {'id': entry.id, 'key': entry.key, 'kg': entry.kg},
+    ];
+    _lastFishSync = _fishSignature(widget.store.snapshot.fishList);
+  }
+
+  String _fishSignature(List<FishStock> list) =>
+      list.map((e) => '${e.id}:${e.key}:${e.kg}').join('|');
+
+  void _syncFishEntries() {
+    final remote = widget.store.snapshot.fishList;
+    final signature = _fishSignature(remote);
+    if (_fishDirty || signature == _lastFishSync) return;
+    _lastFishSync = signature;
+    _fishEntries
+      ..clear()
+      ..addAll([
+        for (final entry in remote)
+          {'id': entry.id, 'key': entry.key, 'kg': entry.kg},
+      ]);
+  }
+
+  @override
+  void didUpdateWidget(_SettingsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncFishEntries();
   }
 
   @override
@@ -686,7 +719,34 @@ class _SettingsTabState extends State<_SettingsTab> {
       controller.dispose();
     }
     _serviceController.dispose();
+    _fishKgController.dispose();
     super.dispose();
+  }
+
+  void _addFishEntry() {
+    final kg = double.tryParse(
+      _fishKgController.text.trim().replaceAll(',', '.'),
+    );
+    if (kg == null || kg <= 0) {
+      showMessage(context, 'Og\'irlikni to\'g\'ri kiriting', error: true);
+      return;
+    }
+    setState(() {
+      _fishDirty = true;
+      _fishEntries.add({
+        'id': DateTime.now().millisecondsSinceEpoch,
+        'key': _fishKey,
+        'kg': kg,
+      });
+      _fishKgController.clear();
+    });
+  }
+
+  void _removeFishEntry(int id) {
+    setState(() {
+      _fishDirty = true;
+      _fishEntries.removeWhere((entry) => entry['id'] == id);
+    });
   }
 
   Future<void> _save() async {
@@ -717,9 +777,19 @@ class _SettingsTabState extends State<_SettingsTab> {
     await runMutation(
       context,
       widget.store,
-      () => widget.store.saveSettings(prices: prices, service: service),
-      successText: 'Narxlar saqlandi',
+      () => widget.store.saveSettings(
+        prices: prices,
+        service: service,
+        fishList: _fishEntries,
+      ),
+      successText: 'Sozlamalar saqlandi',
     );
+    if (mounted) {
+      setState(() {
+        _fishDirty = false;
+        _lastFishSync = _fishSignature(widget.store.snapshot.fishList);
+      });
+    }
   }
 
   Future<void> _resetAll() async {
@@ -806,6 +876,101 @@ class _SettingsTabState extends State<_SettingsTab> {
           crossAxisSpacing: 10,
           childAspectRatio: 2.1,
           children: otherKeys.map(_priceField).toList(),
+        ),
+        const SectionTitle('⚖️ Baliq og\'irliklari (kg)'),
+        Container(
+          decoration: BoxDecoration(
+            color: palette.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: palette.line),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ofitsiant qidirishi uchun mavjud baliqlar ro\'yxati',
+                style: TextStyle(color: palette.mut, fontSize: 11.5),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _fishKey,
+                      decoration: const InputDecoration(isDense: true),
+                      items: [
+                        for (final key in fishKeys)
+                          DropdownMenuItem(
+                            value: key,
+                            child: Text(productName(key)),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) setState(() => _fishKey = value);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _fishKgController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                      ],
+                      decoration: const InputDecoration(
+                        hintText: 'kg, masalan 1.3',
+                        isDense: true,
+                      ),
+                      onSubmitted: (_) => _addFishEntry(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: _addFishEntry,
+                    icon: const Icon(Icons.add, size: 20),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_fishEntries.isEmpty)
+                Text(
+                  'Hali baliq kiritilmagan',
+                  style: TextStyle(color: palette.mut, fontSize: 12.5),
+                )
+              else
+                ..._fishEntries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${productName(entry['key']?.toString() ?? '')} — ${quantityText(asDouble(entry['kg']))} kg',
+                            style: TextStyle(
+                              color: palette.tx,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline,
+                              size: 20, color: palette.bad),
+                          onPressed: () => _removeFishEntry(
+                            asInt(entry['id']),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
         const SectionTitle('Xizmat haqi'),
         Column(

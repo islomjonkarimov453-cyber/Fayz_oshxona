@@ -201,11 +201,16 @@ class AppStore extends ChangeNotifier {
 
   Future<void> createTicket(
     String tableKey,
-    Map<String, double> items,
-  ) async {
+    Map<String, double> items, {
+    List<Map<String, dynamic>>? fishOrders,
+  }) async {
+    final payloadItems = <String, dynamic>{...items};
+    if (fishOrders != null && fishOrders.isNotEmpty) {
+      payloadItems['_fish'] = fishOrders;
+    }
     await _api.post('/tickets/', {
       'table': tableKey,
-      'items': items,
+      'items': payloadItems,
     });
   }
 
@@ -251,11 +256,14 @@ class AppStore extends ChangeNotifier {
   Future<void> saveSettings({
     required Map<String, double> prices,
     required double service,
+    List<Map<String, dynamic>>? fishList,
   }) async {
-    await _api.patch('/settings/', {
+    final body = <String, dynamic>{
       'prices': prices,
       'service': service.round(),
-    });
+    };
+    if (fishList != null) body['fishList'] = fishList;
+    await _api.patch('/settings/', body);
   }
 
   Future<void> resetAll() async {

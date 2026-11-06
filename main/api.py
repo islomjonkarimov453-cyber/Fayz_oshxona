@@ -19,6 +19,7 @@ from .state import (
     EventSubscriber,
     as_int,
     bump_revision,
+    consume_fish_list,
     load_state_from_db,
     notify_subscribers,
     save_state_to_db,
@@ -339,6 +340,7 @@ def ticket_list(request):
         if ticket_id >= (app_state.seq or 1):
             app_state.seq = ticket_id + 1
             app_state.save(update_fields=['seq'])
+        consume_fish_list(ticket.items)
     bump_revision()
     try:
         process_order_notification.delay(ticket.id)
@@ -679,6 +681,9 @@ def api_state(request):
                     for item in (state.get('tickets') or [])
                     if as_int(item.get('id'), 0) > 0 and as_int(item.get('id'), 0) not in old_ticket_ids
                 ]
+                for ticket_data in (state.get('tickets') or []):
+                    if as_int(ticket_data.get('id'), 0) in new_ticket_ids:
+                        consume_fish_list(ticket_data.get('items'))
     except Exception as exc:
         return _json({'error': str(exc)}, 400)
 

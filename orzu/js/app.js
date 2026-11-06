@@ -2,7 +2,7 @@ const FISH=['sazan','oq','buxarski','ilonbosh'];
 const ITEMS=[['sazan','Sazan','kg',0.5],['oq','Oq baliq','kg',0.5],['buxarski','Buxarski','kg',0.5],['ilonbosh','Ilonbosh','kg',0.5],['non','Non','dona',1],['sous','Sous','dona',1],['fanta','Fanta','dona',1],['cola','Cola','dona',1]];
 const ROOMS=7;
 const DEF={prices:{sazan:80000,oq:90000,buxarski:100000,ilonbosh:110000,non:3000,sous:5000,fanta:12000,cola:12000},tables:{},tickets:[],sales:[],seq:1,service:10};
-let S=norm(JSON.parse(JSON.stringify(DEF))),rev=0,cur=null,draft={},pick=false;
+let S=norm(JSON.parse(JSON.stringify(DEF))),rev=0,cur=null,draft={},pick=false,fishQ='',fishRes=null,pendFish=null,draftFish=[];
 const f=n=>Math.round(n).toLocaleString('ru-RU');
 const kg=n=>(Math.round(n*100)/100).toString();
 const LOCK=['admin','waiter','cook'].find(r=>location.pathname.replace(/\//g,'')===r);
@@ -15,7 +15,7 @@ const pctFor=k=>isS(k)?0:svc();
 const fee=(s,k)=>Math.round(s*pctFor(k)/100);
 const grand=(it,k)=>money(it)+fee(money(it),k);
 const hm=t=>new Date(t).toLocaleTimeString('uz',{hour:'2-digit',minute:'2-digit'});
-function go(r){location.hash=r;cur=null;draft={};render()}
+function go(r){location.hash=r;cur=null;draft={};draftFish=[];render()}
 window.addEventListener('hashchange',render);
 
 function render(){setTimeout(checkRing,0);
@@ -45,7 +45,7 @@ function waiterMain(){
   const all={};ITEMS.forEach(([k])=>all[k]=(t.items[k]||0)+(draft[k]||0));
   let h=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${lbl(cur)}</h2><button class="btn ghost" onclick="back()">← Orqaga</button></div>`;
   ITEMS.forEach(([k,n,u,st])=>{
-    const d=draft[k]||0;if(k==='sazan')h+=`<div style="padding:8px 0"><button class="btn ghost" style="width:100%" onclick="pick=!pick;render()">🐟 Baliq qoʻshish ${pick?'▲':'▼'}</button>${pick?`<div class="grid" style="margin-top:8px">${FISH.map(q=>`<button class="btn" onclick="addFish('${q}')">${ITEMS.find(x=>x[0]===q)[1]}<br><small>${f(S.prices[q])} soʻm/kg</small></button>`).join('')}</div>`:''}</div>`;if(FISH.includes(k)&&!draft[k]&&!t.items[k])return;if(k==='non')h+='<div style="color:var(--mut);font-size:13px;padding-top:12px">Boshqa</div>';
+    const d=draft[k]||0;if(k==='sazan')h+=`<div style="padding:8px 0"><button class="btn ghost" style="width:100%" onclick="pick=!pick;render()">🐟 Baliq qoʻshish ${pick?'▲':'▼'}</button>${pick?fishPicker():''}</div>`;if(FISH.includes(k)&&!draft[k]&&!t.items[k])return;if(k==='non')h+='<div style="color:var(--mut);font-size:13px;padding-top:12px">Boshqa</div>';
     h+=`<div class="row"><div class="n">${n}<small>${f(S.prices[k])} soʻm / ${u}${t.items[k]?' · buyurtmada: '+kg(t.items[k])+' '+u:''}</small></div>
     <div class="q"><button onclick="chg('${k}',-${st})">−</button><input type="number" inputmode="decimal" min="0" step="${st}" value="${d}" onchange="setD('${k}',this.value)"><button onclick="chg('${k}',${st})">+</button></div>
     <div class="sum">${f(all[k]*S.prices[k])}</div></div>`;
@@ -56,8 +56,32 @@ function waiterMain(){
   <button class="btn ok" onclick="closeT()" ${money(t.items)||newAmt?'':'disabled style="opacity:.5"'}>🧾 Hisob va chek</button></div></div>`;
   return h;
 }
-function addFish(k){draft[k]=(draft[k]||0)+0.5;pick=false;render()}
-function openT(i){cur=i;draft={};pick=false;render()}
+function fishPicker(){
+  if(pendFish)return `<div class="card" style="margin-top:8px;border-color:var(--warn)"><b>🐟 ${ITEMS.find(x=>x[0]===pendFish.key)[1]} — ${kg(pendFish.kg)} kg</b><div style="margin:8px 0;color:var(--mut);font-size:13px">Qanday tayyorlaymiz?</div><div class="grid"><button class="btn ok" onclick="confirmOnion('sovusli')">🧅 Sovusli</button><button class="btn" onclick="confirmOnion('sovussiz')">Sovussiz</button></div></div>`;
+  let h=`<div style="margin-top:8px"><div style="display:flex;gap:8px"><input type="number" inputmode="decimal" step="0.1" min="0" placeholder="Ogʻirligi (kg), masalan 1.3" value="${fishQ}" onchange="fishQ=this.value;searchFish()" style="flex:1"><button class="btn" onclick="searchFish()">🔍 Qidirish</button></div>`;
+  if(fishRes===null)h+='<div style="color:var(--mut);font-size:12px;margin-top:6px">Admin kiritgan baliq ogʻirligini yozing</div>';
+  else if(!fishRes.length)h+='<div style="color:var(--bad);font-weight:700;margin-top:6px">😕 Bunday ogʻirlikdagi baliq yoʻq</div>';
+  else h+='<div class="grid" style="margin-top:8px">'+fishRes.map(e=>`<button class="btn" onclick="pickFish(${e.id})">${ITEMS.find(x=>x[0]===e.key)[1]}<br><small>${kg(e.kg)} kg · ${f(S.prices[e.key])} soʻm/kg</small></button>`).join('')+'</div>';
+  h+='<div style="color:var(--mut);font-size:12px;margin:8px 0 4px">yoki tez qoʻshish:</div><div class="grid">'+FISH.map(q=>`<button class="btn ghost" onclick="quickFish('${q}')">${ITEMS.find(x=>x[0]===q)[1]}<br><small>+0.5 kg</small></button>`).join('')+'</div></div>';
+  return h;
+}
+function searchFish(){
+  const q=parseFloat(String(fishQ).replace(',','.'));
+  if(!q||q<=0){fishRes=null;render();return}
+  fishRes=(S.fishList||[]).filter(e=>Math.abs((e.kg||0)-q)<=0.5).sort((a,b)=>Math.abs(a.kg-q)-Math.abs(b.kg-q)).slice(0,6);
+  render();
+}
+function pickFish(id){const e=(S.fishList||[]).find(x=>x.id===id);if(e){pendFish={key:e.key,kg:e.kg};render()}}
+function quickFish(k){pendFish={key:k,kg:0.5};render()}
+function confirmOnion(onion){
+  if(!pendFish)return;
+  const {key,kg:w}=pendFish;
+  draft[key]=Math.round(((draft[key]||0)+w)*100)/100;
+  draftFish.push({key,kg:w,onion});
+  pendFish=null;pick=false;render();
+}
+function addFish(k){pendFish={key:k,kg:0.5};render()}
+function openT(i){cur=i;draft={};pick=false;fishQ='';fishRes=null;pendFish=null;draftFish=[];render()}
 function chg(k,d){draft[k]=Math.max(0,Math.round(((draft[k]||0)+d)*100)/100);render()}
 function setD(k,v){draft[k]=Math.max(0,parseFloat(v)||0);render()}
 async function send(){
@@ -67,10 +91,11 @@ async function send(){
     const t=S.tables[tb]||(S.tables[tb]={items:{}});
     ITEMS.forEach(([k])=>{if(d[k])t.items[k]=Math.round(((t.items[k]||0)+d[k])*100)/100});
     const fi={};FISH.forEach(k=>{if(d[k]>0)fi[k]=d[k]});
-    if(Object.keys(fi).length)S.tickets.push({id:S.seq++,table:tb,time:Date.now(),items:fi,done:false,seen:false});
+    if(draftFish.length)fi._fish=draftFish.map(x=>({key:x.key,kg:x.kg,onion:x.onion}));
+    if(Object.keys(fi).some(k=>k!=='_fish'))S.tickets.push({id:S.seq++,table:tb,time:Date.now(),items:fi,done:false,seen:false});
     S.tickets=S.tickets.filter(t=>!(t.done&&t.seen)||Date.now()-t.time<864e5);
   });
-  draft={};render();
+  draft={};draftFish=[];render();
 }
 async function closeT(){
   const d={...draft},tb=cur;let sale=null;
@@ -82,7 +107,7 @@ async function closeT(){
     sale={id:S.sales.length+1,time:Date.now(),table:tb,items,sub:money(items),pct:pctFor(tb),fee:fee(money(items),tb),total:grand(items,tb),prices:{...S.prices}};
     S.sales.push(sale);delete S.tables[tb];
   });
-  cur=null;draft={};render();
+  cur=null;draft={};draftFish=[];render();
   if(sale)receipt(sale);
 }
 function receipt(s){
@@ -96,7 +121,7 @@ function receipt(s){
 /* ---------- OSHPAZ ---------- */
 function cook(){
   const open=S.tickets.filter(t=>!t.done).reverse(),done=S.tickets.filter(t=>t.done).slice(-4).reverse();
-  const tk=t=>`<div class="card tk ${t.done?'done':!t.acc?'new':''}" style="margin-bottom:10px"><h3>${lbl(t.table)} <small style="color:var(--mut);font-weight:400">· ${hm(t.time)}</small></h3><ul style="margin:0 0 10px;padding-left:20px">${ITEMS.filter(([k])=>t.items[k]).map(([k,n,u])=>`<li><b>${n}</b> — ${kg(t.items[k])} ${u}</li>`).join('')}</ul>${t.done?'':`${t.acc?`<button class="btn ok" style="width:100%;font-size:18px;padding:16px" onclick="ready(${t.id})">🔥 Baliq pishdi</button>`:`<button class="btn" style="width:100%;font-size:18px;padding:16px" onclick="accept(${t.id})">🔔 Qabul qildim</button>`}`}</div>`;
+  const tk=t=>{const det=(t.items._fish||[]);const lines=det.length?det.map(x=>`<li><b>${ITEMS.find(i=>i[0]===x.key)?.[1]||x.key}</b> — ${kg(x.kg)} kg · ${x.onion==='sovusli'?'🧅 Sovusli':'Sovussiz'}</li>`).join(''):ITEMS.filter(([k])=>t.items[k]).map(([k,n,u])=>`<li><b>${n}</b> — ${kg(t.items[k])} ${u}</li>`).join('');return `<div class="card tk ${t.done?'done':!t.acc?'new':''}" style="margin-bottom:10px"><h3>${lbl(t.table)} <small style="color:var(--mut);font-weight:400">· ${hm(t.time)}</small></h3><ul style="margin:0 0 10px;padding-left:20px">${lines}</ul>${t.done?'':`${t.acc?`<button class="btn ok" style="width:100%;font-size:18px;padding:16px" onclick="ready(${t.id})">🔥 Baliq pishdi</button>`:`<button class="btn" style="width:100%;font-size:18px;padding:16px" onclick="accept(${t.id})">🔔 Qabul qildim</button>`}`}</div>`};
   return soundBar()+`<h2 style="margin-top:0">Yangi buyurtmalar (${open.length})</h2>${open.map(tk).join('')||'<div class="card" style="color:var(--mut)">Hozircha buyurtma yoʻq</div>'}
   ${done.length?'<h2>Tayyor boʻlganlar</h2>'+done.map(tk).join(''):''}`;
 }
@@ -115,10 +140,10 @@ function checkRing(){
 function accept(id){mutate(()=>{const t=S.tickets.find(x=>x.id===id);if(t)t.acc=true})}
 async function newSaboy(){
   let key;await mutate(()=>{S.seqS=(S.seqS||0)+1;key='S'+S.seqS;S.tables[key]={items:{},saboy:true}});
-  cur=key;draft={};pick=false;render();
+  cur=key;draft={};pick=false;fishQ='';fishRes=null;pendFish=null;draftFish=[];render();
 }
 function back(){
-  const k=cur;cur=null;draft={};render();
+  const k=cur;cur=null;draft={};pick=false;fishQ='';fishRes=null;pendFish=null;draftFish=[];render();
   if(isS(k)&&S.tables[k]&&!money(S.tables[k].items))mutate(()=>{delete S.tables[k]});
 }
 
@@ -142,7 +167,7 @@ function admin(){
   const rev=sl.reduce((a,x)=>a+x.total,0),fees=sl.reduce((a,x)=>a+(x.fee||0),0);
   const fishKg=FISH.reduce((a,k)=>a+qty(k),0),fishSum=FISH.reduce((a,k)=>a+amt(k),0);
   const OTH=['non','sous','fanta','cola'];
-  const tabs=[['home','📊 Umumiy'],['fish','🐟 Baliq hisoboti'],['other','🥤 Non va ichimlik'],['sales','🧾 Sotuvlar tarixi'],['set','⚙️ Narxlar va sozlama']];
+  const tabs=[['home','📊 Umumiy'],['fish','🐟 Baliq hisoboti'],['weights','⚖️ Ogʻirliklar'],['other','🥤 Non va ichimlik'],['sales','🧾 Sotuvlar tarixi'],['set','⚙️ Narxlar va sozlama']];
   const pers=[['today','Bugun'],['week','Oxirgi 7 kun'],['all','Hammasi']];
   const kpi=(v,l,c)=>`<div class="card stat kpi" style="border-top-color:${c}"><b>${v}</b><span>${l}</span></div>`;
   const inp=k=>`<div><label>${nm(k)} (soʻm)</label><input type="number" min="0" value="${S.prices[k]}" onchange="setP('${k}',this.value)"></div>`;
@@ -154,6 +179,12 @@ function admin(){
     <h2>Oxirgi cheklar</h2>${salesTable(sl.slice(-5).reverse())}`;
   }else if(atab==='fish'){
     b=`<div class="card scroll"><table class="tt"><thead><tr><th>Baliq turi</th><th class="num">Narxi (1 kg)</th><th class="num">Sotilgan</th><th class="num">Summa</th><th>Ulushi</th></tr></thead><tbody>${FISH.map(k=>{const p=fishKg?qty(k)/fishKg*100:0;return `<tr><td><b>${nm(k)}</b></td><td class="num">${f(S.prices[k])}</td><td class="num">${kg(qty(k))} kg</td><td class="num">${f(amt(k))}</td><td style="min-width:110px"><div class="bar"><i style="width:${p}%"></i></div><small>${Math.round(p)}%</small></td></tr>`}).join('')}</tbody><tfoot><tr><td colspan="2">Jami baliq</td><td class="num">${kg(fishKg)} kg</td><td class="num">${f(fishSum)}</td><td></td></tr></tfoot></table></div>`;
+  }else if(atab==='weights'){
+    b=`<h2 style="margin-top:0">⚖️ Baliq ogʻirliklari (kg)</h2><div class="card"><p style="color:var(--mut);font-size:13px;margin-top:0">Ofitsiant qidirishi uchun mavjud baliqlar roʻyxati. Har bir qator — bitta baliqning ogʻirligi.</p>
+    <div class="pr" style="margin-bottom:12px"><div><label>Baliq turi</label><select id="fwk" onchange="fwKey=this.value">${FISH.map(k=>`<option value="${k}" ${fwKey===k?'selected':''}>${nm(k)}</option>`).join('')}</select></div>
+    <div><label>Ogʻirligi (kg)</label><input type="number" inputmode="decimal" step="0.1" min="0" placeholder="1.3" value="${fwKg}" onchange="fwKg=this.value"></div>
+    <div style="align-self:end"><button class="btn" onclick="addFishWeight()">➕ Qoʻshish</button></div></div>
+    ${(S.fishList||[]).map(e=>`<div class="row"><div class="n"><b>${nm(e.key)}</b><small>${kg(e.kg)} kg</small></div><button class="btn bad" style="padding:4px 12px" onclick="delFishWeight(${e.id})">🗑</button></div>`).join('')||'<span style="color:var(--mut)">Hali baliq kiritilmagan</span>'}</div>`;
   }else if(atab==='other'){
     b=`<div class="card scroll"><table class="tt"><thead><tr><th>Mahsulot</th><th class="num">Narxi</th><th class="num">Sotilgan</th><th class="num">Summa</th></tr></thead><tbody>${OTH.map(k=>`<tr><td><b>${nm(k)}</b></td><td class="num">${f(S.prices[k])}</td><td class="num">${kg(qty(k))} dona</td><td class="num">${f(amt(k))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="3">Jami</td><td class="num">${f(OTH.reduce((a,k)=>a+amt(k),0))}</td></tr></tfoot></table></div>`;
   }else if(atab==='sales'){
@@ -163,12 +194,19 @@ function admin(){
   }
   return `<div class="adm"><aside class="side">${tabs.map(([k,t])=>`<button class="${atab===k?'on':''}" onclick="setTab('${k}')">${t}</button>`).join('')}</aside><section>${atab==='set'?'':`<div class="per">${pers.map(([k,t])=>`<button class="${aper===k?'on':''}" onclick="setPer('${k}')">${t}</button>`).join('')}</div>`}${b}</section></div>`;
 }
+let fwKey='sazan',fwKg='';
+function addFishWeight(){
+  const kgv=parseFloat(String(fwKg).replace(',','.'));
+  if(!kgv||kgv<=0){alert('Ogʻirlikni kiriting');return}
+  mutate(()=>{S.fishList=S.fishList||[];S.fishList.push({id:Date.now(),key:fwKey,kg:kgv});fwKg=''});
+}
+function delFishWeight(id){mutate(()=>{S.fishList=(S.fishList||[]).filter(e=>e.id!==id)})}
 function setSvc(v){mutate(()=>{S.service=Math.min(100,Math.max(0,parseFloat(v)||0))})}
 function setP(k,v){mutate(()=>{S.prices[k]=Math.max(0,parseFloat(v)||0)})}
-function resetAll(){if(confirm('Hamma sotuvlar va buyurtmalar oʻchiriladi. Davom etasizmi?'))mutate(()=>{const p=S.prices,sv=svc();S=norm(JSON.parse(JSON.stringify(DEF)));S.prices=p;S.service=sv;cur=null})}
+function resetAll(){if(confirm('Hamma sotuvlar va buyurtmalar oʻchiriladi. Davom etasizmi?'))mutate(()=>{const p=S.prices,sv=svc(),fl=S.fishList;S=norm(JSON.parse(JSON.stringify(DEF)));S.prices=p;S.service=sv;S.fishList=fl;cur=null})}
 
 /* ---------- SERVER BILAN ALOQA ---------- */
-function norm(x){x=x||{};x.prices={...DEF.prices,...(x.prices||{})};x.tables=x.tables||{};x.tickets=x.tickets||[];x.sales=x.sales||[];x.seq=x.seq||1;if(x.service==null)x.service=10;return x}
+function norm(x){x=x||{};x.prices={...DEF.prices,...(x.prices||{})};x.tables=x.tables||{};x.tickets=x.tickets||[];x.sales=x.sales||[];x.seq=x.seq||1;if(x.service==null)x.service=10;x.fishList=x.fishList||[];return x}
 function apply(d){S=norm(d.state);rev=d.rev}
 function status(ok){const e=document.getElementById('st');if(e){e.textContent=ok?'\u25cf onlayn':'\u25cf aloqa yoʻq';e.style.color=ok?'var(--ok)':'var(--bad)'}}
 async function mutate(fn){

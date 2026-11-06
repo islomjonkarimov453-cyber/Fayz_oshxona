@@ -58,6 +58,7 @@ class AppState(models.Model):
     service = models.IntegerField(default=10)
     seq = models.IntegerField(default=1)
     seq_s = models.IntegerField(default=0)
+    fish_list = models.JSONField(default=list)
     _rev = models.IntegerField(default=0)
 
     def __str__(self):
@@ -74,6 +75,7 @@ class AppState(models.Model):
             'service': self.service,
             'seq': self.seq,
             'seqS': self.seq_s,
+            'fishList': self.fish_list or [],
             '_rev': self._rev,
         }
 

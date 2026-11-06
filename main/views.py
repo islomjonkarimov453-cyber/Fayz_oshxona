@@ -45,7 +45,7 @@ def service_worker(request):
 
 
 def flutter_app(request, path=''):
-    root = settings.BASE_DIR / 'mobile' / 'build' / 'web'
+    root = settings.BASE_DIR / 'static' / 'app'
     if not path:
         path = 'index.html'
     return static_serve(request, path, document_root=str(root))

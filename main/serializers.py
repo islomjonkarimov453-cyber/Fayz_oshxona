@@ -417,4 +417,11 @@ def settings_fields(data, instance=None, partial=False):
         if seq_s < 0:
             raise ValueError('seqS must be zero or positive')
         fields['seq_s'] = seq_s
+    if 'fishList' in data or 'fish_list' in data:
+        raw = data.get('fishList', data.get('fish_list'))
+        if raw is None:
+            raw = []
+        if not isinstance(raw, list):
+            raise ValueError('fishList must be a list')
+        fields['fish_list'] = raw
     return fields

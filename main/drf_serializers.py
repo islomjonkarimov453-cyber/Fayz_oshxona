@@ -321,10 +321,11 @@ class SaleSerializer(serializers.ModelSerializer):
 
 class AppStateSerializer(serializers.ModelSerializer):
     seqS = serializers.IntegerField(source='seq_s', required=False, min_value=0)
+    fishList = serializers.JSONField(source='fish_list', required=False)
 
     class Meta:
         model = AppState
-        fields = ['prices', 'service', 'seq', 'seqS']
+        fields = ['prices', 'service', 'seq', 'seqS', 'fishList']
         extra_kwargs = {
             'prices': {'required': False},
             'service': {'required': False},
@@ -353,6 +354,11 @@ class AppStateSerializer(serializers.ModelSerializer):
     def validate_seq(self, value):
         if value < 1:
             raise serializers.ValidationError('seq must be positive')
+        return value
+
+    def validate_fishList(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError('fishList must be a list')
         return value
 
     def update(self, instance, validated_data):
