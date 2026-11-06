@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fayz-baliqxona
+    name: fayz-baliqxona-app
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
@@ -12,11 +12,11 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: fayz-db
+          name: fayz-baliqxona-db
           property: connectionString
       - key: PYTHON_VERSION
         value: "3.12.0"
 
 databases:
-  - name: fayz-db
+  - name: fayz-baliqxona-db
     plan: free
