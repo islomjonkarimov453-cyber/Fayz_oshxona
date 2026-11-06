@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kirish — Orzu Baliqxonasi</title>
+<link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+<link rel="manifest" href="{% static 'manifest.webmanifest' %}">
+<meta name="theme-color" content="#0f766e">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="{% static 'images/icon-180.png' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<style>
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+  .login-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:32px 26px;box-shadow:0 12px 40px rgba(0,0,0,.12)}
+  .login-card h1{margin:0 0 4px;font-size:22px;text-align:center}
+  .login-card .sub{margin:0 0 22px;text-align:center;color:var(--mut);font-size:13px}
+  .login-card label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px;font-weight:600}
+  .login-card input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--tx);font-size:16px;box-sizing:border-box}
+  .login-card .btn{width:100%;margin-top:22px;padding:13px}
+  .login-err{background:var(--bad);color:#fff;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:6px;text-align:center}
+  .login-logo{text-align:center;font-size:44px;margin-bottom:10px}
+  .user-chips{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+  .user-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--tx);font-weight:600;font-size:15px;cursor:pointer;text-align:left;width:100%}
+  .user-chip.on{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 10%,var(--bg))}
+  .user-chip .avatar{width:42px;height:42px;border-radius:12px;background:var(--pri);color:var(--pri-tx);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .user-chip .meta{flex:1}
+  .user-chip .role{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+  .user-chip .arrow{color:var(--mut);font-size:18px}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="login-logo">🐟</div>
+  <h1>Orzu Baliqxonasi</h1>
+  <p class="sub">Davom etish uchun kiring</p>
+  {% if error %}<div class="login-err">{{ error }}</div>{% endif %}
+  {% if users %}
+  <div class="user-chips" id="chips">
+    {% for u in users %}
+    <button type="button" class="user-chip" data-u="{{ u.username }}">
+      <span class="avatar">{{ u.name|first|upper }}</span>
+      <span class="meta">
+        <span style="display:block">{{ u.name }}</span>
+        <span class="role">{{ u.role }}</span>
+      </span>
+      <span class="arrow">›</span>
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <form method="post" action="{% url 'main:login' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.GET.next|default:'/' }}">
+    <input id="username" name="username" type="hidden" value="">
+    <div id="pwbox" style="display:none">
+      <label for="password">Parol</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn" type="submit">Kirish</button>
+    </div>
+  </form>
+</div>
+<script>
+(function(){
+  var input=document.getElementById('username');
+  var chips=document.querySelectorAll('.user-chip');
+  chips.forEach(function(c){
+    c.addEventListener('click',function(){
+      input.value=c.getAttribute('data-u');
+      chips.forEach(function(x){x.classList.remove('on')});
+      c.classList.add('on');
+      document.getElementById('pwbox').style.display='block';
+      document.getElementById('password').focus();
+    });
+  });
+})();
+</script>
+</body>
+</html>

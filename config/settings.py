@@ -1,5 +1,8 @@
 
+import os
 from pathlib import Path
+
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,12 +12,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3+f+%c780*%#jia2)-mx2som2s%=(#ntcjo@ck%nue=nyg&!#%'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-3+f+%c780*%#jia2)-mx2som2s%=(#ntcjo@ck%nue=nyg&!#%',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Lokal tarmoqda ofitsiant/oshpaz/admin qurilmalari ulanishi uchun
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -26,11 +33,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'main'
 ]
 
 MIDDLEWARE = [
+    'main.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,11 +73,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+    )
 }
+if 'sqlite' in DATABASES['default']['ENGINE']:
+    # Bir nechta qurilma bir vaqtda yozganda "database is locked" bo'lmasligi uchun
+    DATABASES['default']['OPTIONS'] = {'timeout': 20}
 
 
 # Password validation
@@ -108,6 +121,74 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR /'static']
 
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+
+# Render/Cloudflare kabi proxy ortida HTTPS aniqlash
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+LOGIN_URL = "/login/"
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://curtis-gore-exterior-cardiovascular.trycloudflare.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://10.144.82.22:8000',
+    'http://192.168.100.80:8000',
+    'https://10.144.82.22:8443',
+    'https://localhost:8443',
+    'https://127.0.0.1:8443',
+]
+
+# Login sessiyasi uzoq muddat saqlanadi — foydalanuvchi qayta parol kiritmaydi.
+# Boshqa odam kirishi uchun "Chiqish" tugmasi bosiladi.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 365 * 10  # 10 yil
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
+
+# Celery ixtiyoriy. Redis/Celery worker ishlamasa ham sayt ishlashi uchun
+# tasklar so'rov ichida (eager) bajariladi va broker talab qilinmaydi.
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = False
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+
+# Django REST Framework
+# API hozircha lokal tarmoqda ochiq ishlaydi (auth keyinroq qo'shilishi mumkin).
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_PAGINATION_CLASS': None,
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'COERCE_DECIMAL_TO_STRING': True,
+}
 

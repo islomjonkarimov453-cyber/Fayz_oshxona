@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Orzu Baliqxonasi</title>
+    <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
+    <meta name="theme-color" content="#0f766e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Baliqxona">
+    <link rel="apple-touch-icon" href="{% static 'images/icon-180.png' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>
+            <img src="{% static 'images/logo.svg' %}" alt="" class="logo">
+            Orzu baliqxonasi
+            <span id="st" class="st"></span>
+        </h1>
+        <nav id="nav"></nav>
+    </header>
+    <main id="app"></main>
+    <div id="modal"></div>
+    <script src="{% static 'js/app.js' %}"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+    </script>
+</body>
+</html>

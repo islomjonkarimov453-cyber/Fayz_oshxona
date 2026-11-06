@@ -1,1 +1,11 @@
 .venv
+__pycache__/
+*.pyc
+db.sqlite3
+staticfiles/
+media/
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins*
+*.apk
+certs/
