@@ -2,7 +2,10 @@
 import os
 from pathlib import Path
 
-import dj_database_url
+try:
+    import dj_database_url
+except ImportError:  # paket o'rnatilmagan bo'lsa — faqat SQLite
+    dj_database_url = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,10 +40,16 @@ INSTALLED_APPS = [
     'main'
 ]
 
+try:
+    import whitenoise  # noqa: F401
+    _WHITENOISE_MIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware']
+except ImportError:
+    _WHITENOISE_MIDDLEWARE = []
+
 MIDDLEWARE = [
     'main.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    *_WHITENOISE_MIDDLEWARE,
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,15 +81,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600,
-    )
-}
-if 'sqlite' in DATABASES['default']['ENGINE']:
-    # Bir nechta qurilma bir vaqtda yozganda "database is locked" bo'lmasligi uchun
-    DATABASES['default']['OPTIONS'] = {'timeout': 20}
+if dj_database_url and os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            # Bir nechta qurilma bir vaqtda yozganda "database is locked" bo'lmasligi uchun
+            'OPTIONS': {'timeout': 20},
+        }
+    }
 
 
 # Password validation
@@ -121,14 +136,15 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR /'static']
 
-STORAGES = {
-    'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-    },
-    'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-    },
-}
+if _WHITENOISE_MIDDLEWARE:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 # Render/Cloudflare kabi proxy ortida HTTPS aniqlash
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
