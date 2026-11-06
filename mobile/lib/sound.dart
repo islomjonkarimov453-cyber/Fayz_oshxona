@@ -17,6 +17,27 @@ class SoundFx {
     }
   }
 
+  /// Uzluksiz alarm — qabul qilinmagan buyurtma bo'lsa chalinadi.
+  static Future<void> startAlarm() async {
+    try {
+      await FlutterRingtonePlayer().playAlarm(
+        volume: 1.0,
+        looping: true,
+        asAlarm: true,
+      );
+      await HapticFeedback.heavyImpact();
+    } catch (_) {
+      await ring();
+    }
+  }
+
+  /// Alarmni to'xtatish.
+  static Future<void> stopAlarm() async {
+    try {
+      await FlutterRingtonePlayer().stop();
+    } catch (_) {}
+  }
+
   /// Oshpazga yangi buyurtma kelganda chalinadigan signal.
   static Future<void> ring() async {
     try {

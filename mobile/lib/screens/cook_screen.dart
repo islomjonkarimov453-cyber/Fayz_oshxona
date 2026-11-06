@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
@@ -21,8 +19,7 @@ class CookScreen extends StatefulWidget {
 }
 
 class _CookScreenState extends State<CookScreen> {
-  Timer? _ringTimer;
-  Set<int> _pendingIds = <int>{};
+  bool _alarmOn = false;
 
   AppStore get _store => widget.store;
 
@@ -34,30 +31,29 @@ class _CookScreenState extends State<CookScreen> {
   @override
   void initState() {
     super.initState();
-    _pendingIds = _currentPending;
     _store.addListener(_onStoreChanged);
-    _ringTimer = Timer.periodic(const Duration(seconds: 8), (_) {
-      if (_currentPending.isNotEmpty && mounted) SoundFx.ring();
-    });
-    if (_currentPending.isNotEmpty) {
-      // Ekranga kirganda darhol eslatma.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) SoundFx.ring();
-      });
+    _syncAlarm();
+  }
+
+  /// Qabul qilinmagan buyurtma bor-yo'qligiga qarab alarmni yoqadi/o'chiradi.
+  void _syncAlarm() {
+    final hasPending = _currentPending.isNotEmpty;
+    if (hasPending == _alarmOn) return;
+    _alarmOn = hasPending;
+    if (hasPending) {
+      SoundFx.startAlarm();
+    } else {
+      SoundFx.stopAlarm();
     }
   }
 
   void _onStoreChanged() {
-    final current = _currentPending;
-    if (current.difference(_pendingIds).isNotEmpty) {
-      SoundFx.ring();
-    }
-    _pendingIds = current;
+    _syncAlarm();
   }
 
   @override
   void dispose() {
-    _ringTimer?.cancel();
+    if (_alarmOn) SoundFx.stopAlarm();
     _store.removeListener(_onStoreChanged);
     super.dispose();
   }
