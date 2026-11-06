@@ -168,6 +168,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://127.0.0.1:8443',
 ]
 
+# Deploy muhitida domen nomi noma'lum bo'lganda env orqali qo'shiladi.
+_extra_csrf = os.environ.get('CSRF_EXTRA_ORIGINS', '')
+if _extra_csrf:
+    CSRF_TRUSTED_ORIGINS += [
+        o.strip() for o in _extra_csrf.split(',') if o.strip()
+    ]
+
 # Login sessiyasi uzoq muddat saqlanadi — foydalanuvchi qayta parol kiritmaydi.
 # Boshqa odam kirishi uchun "Chiqish" tugmasi bosiladi.
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 365 * 10  # 10 yil
