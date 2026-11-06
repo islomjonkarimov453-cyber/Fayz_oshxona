@@ -1,4 +1,4 @@
-ORZU BALIQXONASI - 3 ta kompyuterda ishlash (Ofitsiant / Oshpaz / Admin)
+FAYZ BALIQXONASI - 3 ta kompyuterda ishlash (Ofitsiant / Oshpaz / Admin)
 
 1) Asosiy kompyuterga (server) Node.js ni oʻrnating: https://nodejs.org (LTS)
 2) Shu papkadagi start.bat ni ikki marta bosing (yoki: node server.js)

@@ -87,7 +87,7 @@ async function closeT(){
 }
 function receipt(s){
   const lines=ITEMS.filter(([k])=>s.items[k]).map(([k,n,u])=>`<div class="l"><span>${n} ${kg(s.items[k])} ${u}</span><span>${f(s.items[k]*S.prices[k])}</span></div>`).join('');
-  document.getElementById('modal').innerHTML=`<div class="modal"><div><div class="rc"><div style="text-align:center"><b>ORZU BALIQXONASI</b><br>Chek №${s.id}</div><hr>
+  document.getElementById('modal').innerHTML=`<div class="modal"><div><div class="rc"><div style="text-align:center"><b>FAYZ BALIQXONASI</b><br>Chek №${s.id}</div><hr>
   <div>${lbl(s.table)}<br>${new Date(s.time).toLocaleString('uz')}</div><hr>${lines}<hr>
   <div class="l"><span>Taomlar</span><span>${f(s.sub??s.total)}</span></div><div class="l"><span>Xizmat (${s.pct||0}%)</span><span>${f(s.fee||0)}</span></div><div class="l"><b>JAMI:</b><b>${f(s.total)} soʻm</b></div><hr><div style="text-align:center">Rahmat! Yana kutamiz 🐟</div></div>
   <div class="acts" style="margin-top:10px"><button class="btn" onclick="window.print()">🖨 Chop etish</button><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Yopish</button></div></div></div>`;

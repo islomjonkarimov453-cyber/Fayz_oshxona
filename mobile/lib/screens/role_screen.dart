@@ -73,7 +73,7 @@ class RoleScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'Orzu Baliqxonasi',
+                        'Fayz Baliqxonasi',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: palette.tx,

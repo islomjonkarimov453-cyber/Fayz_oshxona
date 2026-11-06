@@ -1,5 +1,5 @@
-name: orzu_baliqxona
-description: Orzu Baliqxonasi boshqaruv tizimi uchun mobil ilova (Flutter).
+name: fayz_baliqxona
+description: Fayz Baliqxonasi boshqaruv tizimi uchun mobil ilova (Flutter).
 publish_to: 'none'
 version: 1.0.2+3
 
@@ -18,6 +18,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "../static/images/icon-512.png"
+  adaptive_icon_background: "#0f766e"
+  adaptive_icon_foreground: "../static/images/icon-512.png"
 
 flutter:
   uses-material-design: true

@@ -92,7 +92,7 @@ class _LockScreenState extends State<LockScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Orzu Baliqxonasi',
+                    'Fayz Baliqxonasi',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,

@@ -1,11 +1,11 @@
 {
-    "name": "Orzu Baliqxonasi",
+    "name": "Fayz Baliqxonasi",
     "short_name": "Baliqxona",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0f766e",
     "theme_color": "#0f766e",
-    "description": "Orzu Baliqxonasi boshqaruv tizimi",
+    "description": "Fayz Baliqxonasi boshqaruv tizimi",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,4 +1,4 @@
-// Orzu Baliqxonasi — API modellari.
+// Fayz Baliqxonasi — API modellari.
 //
 // Barcha raqamlar API'dan `num` yoki `String` ko'rinishida kelishi mumkin,
 // shuning uchun maydonlarni xavfsiz o'giruvchi yordamchilar ishlatiladi.

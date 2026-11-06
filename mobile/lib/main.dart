@@ -19,17 +19,17 @@ int? get _lockedIndex => switch (_appRole) {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const OrzuApp());
+  runApp(const FayzApp());
 }
 
-class OrzuApp extends StatefulWidget {
-  const OrzuApp({super.key});
+class FayzApp extends StatefulWidget {
+  const FayzApp({super.key});
 
   @override
-  State<OrzuApp> createState() => _OrzuAppState();
+  State<FayzApp> createState() => _FayzAppState();
 }
 
-class _OrzuAppState extends State<OrzuApp> {
+class _FayzAppState extends State<FayzApp> {
   late final AppStore _store;
   bool _unlocked = false;
   bool _unlockChecked = false;
@@ -57,7 +57,7 @@ class _OrzuAppState extends State<OrzuApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Orzu Baliqxonasi',
+      title: 'Fayz Baliqxonasi',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
@@ -111,7 +111,7 @@ class _SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'Orzu Baliqxonasi',
+              'Fayz Baliqxonasi',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,

@@ -294,7 +294,7 @@ class ReceiptView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'ORZU BALIQXONASI',
+              'FAYZ BALIQXONASI',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.w800,

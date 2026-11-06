@@ -1,4 +1,4 @@
-// Orzu baliqxonasi serveri. Ishga tushirish: node server.js
+// Fayz baliqxonasi serveri. Ishga tushirish: node server.js
 const http=require('http'),fs=require('fs'),path=require('path'),os=require('os');
 const PORT=process.env.PORT||3000, ADMIN_PASS=process.env.ADMIN_PASS||'1234'; // admin paroli
 const ROOT=__dirname, DATA=path.join(ROOT,'data.json');
@@ -38,7 +38,7 @@ http.createServer((req,res)=>{
     res.writeHead(200,{'Content-Type':MIME[path.extname(file)]||'application/octet-stream','Cache-Control':'no-cache'});res.end(d);
   });
 }).listen(PORT,'0.0.0.0',()=>{
-  console.log('\nOrzu baliqxonasi serveri ishga tushdi!\n');
+  console.log('\nFayz baliqxonasi serveri ishga tushdi!\n');
   Object.values(os.networkInterfaces()).flat().filter(i=>i.family==='IPv4'&&!i.internal).forEach(i=>{
     console.log(`Boshqa kompyuterlarda oching (${i.address}):`);
     console.log(`  Ofitsiant: http://${i.address}:${PORT}/waiter`);

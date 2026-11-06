@@ -11,7 +11,7 @@ fi
 IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 127.0.0.1)"
 
 echo "=============================================="
-echo "  Orzu Baliqxonasi serveri ishga tushmoqda"
+echo "  Fayz Baliqxonasi serveri ishga tushmoqda"
 echo "  Telefon uchun manzil: http://$IP:8000"
 echo "  (telefon va kompyuter bir Wi-Fi tarmog'ida bo'lsin)"
 echo "=============================================="

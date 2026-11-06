@@ -1,4 +1,4 @@
-# Orzu Baliqxona REST API (Django REST Framework)
+# Fayz Baliqxona REST API (Django REST Framework)
 
 Barcha API manzillari: `http://<server-ip>:8000/api/v1/`
 

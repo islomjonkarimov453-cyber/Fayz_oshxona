@@ -76,7 +76,7 @@ class _HomeShellState extends State<HomeShell> {
                 const SizedBox(width: 10),
                 Flexible(
                   child: Text(
-                    'Orzu Baliqxonasi',
+                    'Fayz Baliqxonasi',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

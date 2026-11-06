@@ -1,1 +1,1 @@
-# Orzu_oshxona
+# Fayz_oshxona
