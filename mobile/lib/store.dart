@@ -35,8 +35,12 @@ class AppStore extends ChangeNotifier {
   bool get isAndroid =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
-  String defaultBaseUrl() =>
-      isAndroid ? 'http://10.41.148.137:8000' : 'http://127.0.0.1:8000';
+  String defaultBaseUrl() {
+    if (kIsWeb) return Uri.base.origin;
+    return isAndroid
+        ? 'http://10.144.82.22:8000'
+        : 'http://127.0.0.1:8000';
+  }
 
   Future<void> init() async {
     try {
