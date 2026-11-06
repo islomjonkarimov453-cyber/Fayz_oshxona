@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import 'constants.dart';
 import 'models.dart';
-import 'sound.dart';
 
 /// Ilovaning yagona holat do'koni.
 ///
@@ -27,8 +26,6 @@ class AppStore extends ChangeNotifier {
   String? lastError;
 
   Timer? _timer;
-  Set<int> _readyTicketIds = <int>{};
-  bool _loadedOnce = false;
 
   String get baseUrl => _api.baseUrl;
 
@@ -97,14 +94,6 @@ class AppStore extends ChangeNotifier {
 
     final next = AppSnapshot.fromJson(Map<String, dynamic>.from(rawState));
     snapshot = next;
-
-    final readyIds = next.readyTickets.map((ticket) => ticket.id).toSet();
-    if (_loadedOnce && readyIds.difference(_readyTicketIds).isNotEmpty) {
-      // Yangi tayyor taom — ofitsiantga ovozli signal.
-      SoundFx.beep();
-    }
-    _readyTicketIds = readyIds;
-    _loadedOnce = true;
   }
 
   /// O'zgartirish amali: bajarib, so'ng holatni darhol yangilaydi.

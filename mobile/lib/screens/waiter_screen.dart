@@ -2,16 +2,53 @@ import 'package:flutter/material.dart';
 
 import '../constants.dart';
 import '../models.dart';
+import '../sound.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'order_editor_screen.dart';
 
 /// Ofitsiant: honalar ro'yxati va tayyor taom bildirishnomalari.
-class WaiterScreen extends StatelessWidget {
+class WaiterScreen extends StatefulWidget {
   const WaiterScreen({super.key, required this.store});
 
   final AppStore store;
+
+  @override
+  State<WaiterScreen> createState() => _WaiterScreenState();
+}
+
+class _WaiterScreenState extends State<WaiterScreen> {
+  bool _alarmOn = false;
+
+  AppStore get store => widget.store;
+
+  @override
+  void initState() {
+    super.initState();
+    store.addListener(_syncAlarm);
+    _syncAlarm();
+  }
+
+  @override
+  void dispose() {
+    if (_alarmOn) SoundFx.stopAlarm();
+    store.removeListener(_syncAlarm);
+    super.dispose();
+  }
+
+  /// Tayyor, lekin olinmagan taom bo'lsa alarm uzluksiz chaladi;
+  /// "Olib bordim" bosilganda to'xtaydi.
+  void _syncAlarm() {
+    final hasReady = store.snapshot.readyTickets.isNotEmpty;
+    if (hasReady == _alarmOn) return;
+    _alarmOn = hasReady;
+    if (hasReady) {
+      SoundFx.startAlarm();
+    } else {
+      SoundFx.stopAlarm();
+    }
+  }
 
   void _openTable(BuildContext context, String key) {
     Navigator.of(context).push(
