@@ -1,6 +1,6 @@
 # Orzu Baliqxonasi — Flutter mobil ilova
 
-Django backend (`Fayz_Baliqxona`) bilan ishlaydigan mobil ilova. Veb-versiyadagi
+Django backend (`Orzu_Baliqxona`) bilan ishlaydigan mobil ilova. Veb-versiyadagi
 uch rol (Ofitsiant, Oshpaz, Admin) to'liq Flutter'ga ko'chirilgan.
 
 ## Imkoniyatlar

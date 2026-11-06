@@ -1,4 +1,4 @@
-package com.orzu.fayz_baliqxona
+package com.orzu.orzu_baliqxona
 
 import io.flutter.embedding.android.FlutterActivity
 

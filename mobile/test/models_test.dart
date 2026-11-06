@@ -1,5 +1,5 @@
-import 'package:fayz_baliqxona/constants.dart';
-import 'package:fayz_baliqxona/models.dart';
+import 'package:orzu_baliqxona/constants.dart';
+import 'package:orzu_baliqxona/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -7,12 +7,12 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fayz_baliqxona/main.dart';
+import 'package:orzu_baliqxona/main.dart';
 
 void main() {
   testWidgets('Ilova ishga tushadi', (WidgetTester tester) async {
-    await tester.pumpWidget(const FayzApp());
+    await tester.pumpWidget(const OrzuApp());
     await tester.pump();
-    expect(find.byType(FayzApp), findsOneWidget);
+    expect(find.byType(OrzuApp), findsOneWidget);
   });
 }

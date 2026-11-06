@@ -19,17 +19,17 @@ int? get _lockedIndex => switch (_appRole) {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const FayzApp());
+  runApp(const OrzuApp());
 }
 
-class FayzApp extends StatefulWidget {
-  const FayzApp({super.key});
+class OrzuApp extends StatefulWidget {
+  const OrzuApp({super.key});
 
   @override
-  State<FayzApp> createState() => _FayzAppState();
+  State<OrzuApp> createState() => _OrzuAppState();
 }
 
-class _FayzAppState extends State<FayzApp> {
+class _OrzuAppState extends State<OrzuApp> {
   late final AppStore _store;
   bool _unlocked = false;
   bool _unlockChecked = false;
