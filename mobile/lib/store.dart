@@ -38,7 +38,7 @@ class AppStore extends ChangeNotifier {
   String defaultBaseUrl() {
     if (kIsWeb) return Uri.base.origin;
     return isAndroid
-        ? 'http://10.144.82.22:8000'
+        ? 'https://fayz-baliqxona-app.onrender.com'
         : 'http://127.0.0.1:8000';
   }
 
