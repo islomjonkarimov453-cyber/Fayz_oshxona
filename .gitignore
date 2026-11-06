@@ -9,3 +9,6 @@ mobile/.dart_tool/
 mobile/.flutter-plugins*
 *.apk
 certs/
+
+# Deploy uchun APK lar
+!static/fayz-*.apk
