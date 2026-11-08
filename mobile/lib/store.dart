@@ -65,6 +65,18 @@ class AppStore extends ChangeNotifier {
     super.dispose();
   }
 
+  /// Login: username + password -> rol ('admin' | 'cook' | 'waiter').
+  Future<String> login(String username, String password) async {
+    final data = await _api.post('/login/', {
+      'username': username.trim(),
+      'password': password,
+    });
+    if (data is Map && data['role'] != null) {
+      return data['role'].toString();
+    }
+    throw ApiException('Kirish xatosi');
+  }
+
   Future<void> setBaseUrl(String url) async {
     _api.baseUrl = url;
     try {

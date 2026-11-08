@@ -41,9 +41,9 @@ class _CookScreenState extends State<CookScreen> {
     if (hasPending == _alarmOn) return;
     _alarmOn = hasPending;
     if (hasPending) {
-      SoundFx.startAlarm();
+      SoundFx.startCookSignal();
     } else {
-      SoundFx.stopAlarm();
+      SoundFx.stopSignal();
     }
   }
 

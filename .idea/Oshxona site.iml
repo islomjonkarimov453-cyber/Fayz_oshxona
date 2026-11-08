@@ -3,6 +3,9 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/mobile/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/mobile/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/mobile/build" />
     </content>
     <orderEntry type="jdk" jdkName="~/Desktop/HACKATHON-IT-SCHOOL-/.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

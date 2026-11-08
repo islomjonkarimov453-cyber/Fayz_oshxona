@@ -19,5 +19,6 @@ urlpatterns = [
     path('stats/fish/', drf_views.StatsFishAPIView.as_view(), name='v1_stats_fish'),
     path('stats/other/', drf_views.StatsOtherAPIView.as_view(), name='v1_stats_other'),
     path('state/', drf_views.StateAPIView.as_view(), name='v1_state'),
+    path('login/', drf_views.LoginAPIView.as_view(), name='v1_login'),
     path('health/', drf_views.HealthAPIView.as_view(), name='v1_health'),
 ] + router.urls

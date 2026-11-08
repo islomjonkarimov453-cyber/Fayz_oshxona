@@ -44,9 +44,9 @@ class _WaiterScreenState extends State<WaiterScreen> {
     if (hasReady == _alarmOn) return;
     _alarmOn = hasReady;
     if (hasReady) {
-      SoundFx.startAlarm();
+      SoundFx.startWaiterSignal();
     } else {
-      SoundFx.stopAlarm();
+      SoundFx.stopSignal();
     }
   }
 

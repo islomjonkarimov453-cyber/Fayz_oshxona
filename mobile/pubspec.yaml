@@ -12,6 +12,7 @@ dependencies:
   http: ^1.2.0
   shared_preferences: ^2.2.0
   flutter_ringtone_player: ^4.0.0+3
+  audioplayers: ^6.1.0
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -29,3 +30,5 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/

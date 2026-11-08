@@ -362,6 +362,27 @@ class StateAPIView(APIView):
         return Response({'rev': state['_rev'], 'state': state})
 
 
+class LoginAPIView(APIView):
+    """Mobil ilova login: username + password -> rol."""
+
+    ROLE_BY_USERNAME = {'admin': 'admin', 'admin2': 'cook', 'admin3': 'waiter'}
+
+    def post(self, request):
+        from django.contrib.auth import authenticate
+
+        username = (request.data.get('username') or '').strip()
+        password = request.data.get('password') or ''
+        role = self.ROLE_BY_USERNAME.get(username)
+        if role is None:
+            return Response({'error': "Login yoki parol noto'g'ri"},
+                            status=status.HTTP_401_UNAUTHORIZED)
+        user = authenticate(request, username=username, password=password)
+        if user is None:
+            return Response({'error': "Login yoki parol noto'g'ri"},
+                            status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'role': role, 'name': user.get_full_name() or username})
+
+
 class HealthAPIView(APIView):
     def get(self, request):
         from django.utils import timezone

@@ -1,58 +1,52 @@
-import 'package:flutter/services.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'dart:async';
 
-/// Ovoz va tebranish signallari.
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
+
+/// Ovoz signallari — veb-versiyadagi kabi yumshoq signal.
 ///
-/// Yangi buyurtma signali qurilmaning alarm/qo'ng'iroq oqimida chalinadi —
-/// oddiy tizim tovushidan ancha balandroq.
+/// Budilnik (alarm) o'rniga har 5 sekundda qisqa signal chaladi:
+/// - oshpaz: `cook_ring.wav` (yangi buyurtma qabul qilinmaguncha)
+/// - ofitsiant: `waiter_ring.wav` (taom tayyor bo'lib olinmaguncha)
 class SoundFx {
-  static Future<void> beep() async {
+  static final AudioPlayer _player = AudioPlayer();
+  static Timer? _timer;
+
+  static Future<void> _play(String asset) async {
     try {
-      await FlutterRingtonePlayer().playAlarm();
+      await _player.stop();
+      await _player.play(AssetSource(asset));
       await HapticFeedback.mediumImpact();
     } catch (_) {
-      try {
-        await SystemSound.play(SystemSoundType.alert);
-      } catch (_) {}
+      // Ovoz chalmasa ham davom etamiz.
     }
   }
 
-  /// Uzluksiz alarm — qabul qilinmagan buyurtma bo'lsa chalinadi.
-  static Future<void> startAlarm() async {
-    try {
-      await FlutterRingtonePlayer().playAlarm(
-        volume: 1.0,
-        looping: true,
-        asAlarm: true,
-      );
-      await HapticFeedback.heavyImpact();
-    } catch (_) {
-      await ring();
-    }
+  /// Signalni yoqadi: darhol bir marta, keyin har 5 sekundda.
+  static void startSignal(String asset) {
+    _play(asset);
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _play(asset);
+    });
   }
 
-  /// Alarmni to'xtatish.
-  static Future<void> stopAlarm() async {
-    try {
-      await FlutterRingtonePlayer().stop();
-    } catch (_) {}
+  /// Signalni to'xtatadi.
+  static void stopSignal() {
+    _timer?.cancel();
+    _timer = null;
+    _player.stop();
   }
 
-  /// Oshpazga yangi buyurtma kelganda chalinadigan signal.
-  static Future<void> ring() async {
-    try {
-      await FlutterRingtonePlayer().playAlarm(volume: 1.0, looping: false);
-      await HapticFeedback.heavyImpact();
-    } catch (_) {
-      try {
-        for (var i = 0; i < 3; i++) {
-          await SystemSound.play(SystemSoundType.alert);
-          await Future<void>.delayed(const Duration(milliseconds: 180));
-        }
-        await HapticFeedback.heavyImpact();
-      } catch (_) {
-        // Jim o'tkazamiz.
-      }
-    }
-  }
+  /// Oshpaz signali (yangi buyurtma).
+  static void startCookSignal() => startSignal('sounds/cook_ring.wav');
+
+  /// Ofitsiant signali (taom tayyor).
+  static void startWaiterSignal() => startSignal('sounds/waiter_ring.wav');
+
+  // Eski nomlar (moslashuv uchun).
+  static Future<void> beep() => _play('sounds/waiter_ring.wav');
+  static Future<void> ring() => _play('sounds/cook_ring.wav');
+  static void startAlarm() => startCookSignal();
+  static void stopAlarm() => stopSignal();
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_shell.dart';
 import 'screens/lock_screen.dart';
-import 'screens/role_screen.dart';
+import 'screens/login_screen.dart';
 import 'store.dart';
 import 'theme.dart';
 
@@ -77,7 +77,7 @@ class _FayzAppState extends State<FayzApp> {
           if (locked != null) {
             return HomeShell(store: _store, initialIndex: locked, locked: true);
           }
-          return RoleScreen(store: _store);
+          return LoginScreen(store: _store);
         },
       ),
     );
