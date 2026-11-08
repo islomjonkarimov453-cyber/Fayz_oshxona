@@ -233,36 +233,37 @@ class _TicketCard extends StatelessWidget {
             _AddressField(store: store, tableKey: ticket.table),
           ],
           const SizedBox(height: 10),
-          if (ticket.fishOrders.isNotEmpty)
-            ...ticket.fishOrders.map(
-                  (order) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            productName(order.key),
-                            style: TextStyle(
-                              color: palette.tx,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${quantityText(order.kg)} kg · ${order.onionLabel}',
+          ...ticket.fishOrders.map(
+                (order) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          productName(order.key),
                           style: TextStyle(
                             color: palette.tx,
                             fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        '${quantityText(order.kg)} kg · ${order.onionLabel}',
+                        style: TextStyle(
+                          color: palette.tx,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                )
-          else
-            ...ticket.items.entries.where((entry) => entry.value > 0).map(
+                ),
+              ),
+          ...ticket.items.entries
+              .where((entry) =>
+                  entry.value > 0 && !fishKeys.contains(entry.key))
+              .map(
                 (entry) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Row(
