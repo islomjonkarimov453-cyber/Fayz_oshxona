@@ -167,6 +167,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://localhost:8443',
     'https://127.0.0.1:8443',
     'https://fayz-baliqxona-app.onrender.com',
+    'https://fayz-baliqhona.uz',
+    'https://www.fayz-baliqhona.uz',
 ]
 
 # Deploy muhitida domen nomi noma'lum bo'lganda env orqali qo'shiladi.

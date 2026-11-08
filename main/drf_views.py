@@ -36,6 +36,7 @@ from .state import (
     PRODUCT_LABELS,
     bump_revision,
     consume_fish_list,
+    consume_stock,
     load_state_from_db,
     notify_subscribers,
 )
@@ -197,6 +198,12 @@ class TicketViewSet(RevisionMixin, viewsets.ModelViewSet):
 
 class SaleViewSet(RevisionMixin, viewsets.ModelViewSet):
     serializer_class = SaleSerializer
+
+    def perform_create(self, serializer):
+        sale = serializer.save()
+        consume_fish_list(sale.items)
+        consume_stock(sale.items)
+        bump_revision()
 
     def get_queryset(self):
         queryset = Sale.objects.order_by('id')

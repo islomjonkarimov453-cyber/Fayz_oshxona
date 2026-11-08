@@ -35,14 +35,20 @@ class AppStore extends ChangeNotifier {
   String defaultBaseUrl() {
     if (kIsWeb) return Uri.base.origin;
     return isAndroid
-        ? 'https://fayz-baliqxona-app.onrender.com'
+        ? 'https://fayz-baliqhona.uz'
         : 'http://127.0.0.1:8000';
   }
 
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _api.baseUrl = prefs.getString(_prefsKey) ?? defaultBaseUrl();
+      var saved = prefs.getString(_prefsKey);
+      // Eski Render manzili saqlanib qolgan bo'lsa — yangi domen bilan almashtiramiz.
+      if (saved != null && saved.contains('onrender.com')) {
+        saved = null;
+        await prefs.remove(_prefsKey);
+      }
+      _api.baseUrl = saved ?? defaultBaseUrl();
     } catch (_) {
       _api.baseUrl = defaultBaseUrl();
     }
@@ -257,12 +263,14 @@ class AppStore extends ChangeNotifier {
     required Map<String, double> prices,
     required double service,
     List<Map<String, dynamic>>? fishList,
+    Map<String, double>? stock,
   }) async {
     final body = <String, dynamic>{
       'prices': prices,
       'service': service.round(),
     };
     if (fishList != null) body['fishList'] = fishList;
+    if (stock != null) body['stock'] = stock;
     await _api.patch('/settings/', body);
   }
 

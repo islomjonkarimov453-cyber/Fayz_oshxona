@@ -20,6 +20,7 @@ from .state import (
     as_int,
     bump_revision,
     consume_fish_list,
+    consume_stock,
     load_state_from_db,
     notify_subscribers,
     save_state_to_db,
@@ -451,6 +452,8 @@ def sale_list(request):
     table_key = fields['table_key']
     with transaction.atomic():
         sale = Sale.objects.create(id=sale_id, **fields)
+        consume_fish_list(fields.get('items'))
+        consume_stock(fields.get('items'))
         if clear_table:
             TableState.objects.filter(table_key=table_key).delete()
             if table_key.isdigit():

@@ -665,6 +665,7 @@ class _SettingsTabState extends State<_SettingsTab> {
   late final Map<String, TextEditingController> _priceControllers;
   late final TextEditingController _serviceController;
   late final TextEditingController _fishKgController;
+  late final TextEditingController _tabakaController;
   late final List<Map<String, dynamic>> _fishEntries;
   String _fishKey = 'sazan';
   bool _fishDirty = false;
@@ -684,6 +685,9 @@ class _SettingsTabState extends State<_SettingsTab> {
       text: quantityText(snapshot.service),
     );
     _fishKgController = TextEditingController();
+    _tabakaController = TextEditingController(
+      text: quantityText(snapshot.stock['tabaka'] ?? 0),
+    );
     _fishEntries = [
       for (final entry in snapshot.fishList)
         {'id': entry.id, 'key': entry.key, 'kg': entry.kg},
@@ -720,6 +724,7 @@ class _SettingsTabState extends State<_SettingsTab> {
     }
     _serviceController.dispose();
     _fishKgController.dispose();
+    _tabakaController.dispose();
     super.dispose();
   }
 
@@ -765,6 +770,13 @@ class _SettingsTabState extends State<_SettingsTab> {
       }
       prices[entry.key] = value;
     }
+    final tabaka = double.tryParse(
+      _tabakaController.text.trim().replaceAll(',', '.'),
+    );
+    if (tabaka == null || tabaka < 0) {
+      showMessage(context, 'Tabaka qoldig\'ini to\'g\'ri kiriting', error: true);
+      return;
+    }
     final service = double.tryParse(
       _serviceController.text.trim().replaceAll(',', '.'),
     );
@@ -781,6 +793,7 @@ class _SettingsTabState extends State<_SettingsTab> {
         prices: prices,
         service: service,
         fishList: _fishEntries,
+        stock: {'tabaka': tabaka},
       ),
       successText: 'Sozlamalar saqlandi',
     );
@@ -969,6 +982,38 @@ class _SettingsTabState extends State<_SettingsTab> {
                     ),
                   ),
                 ),
+            ],
+          ),
+        ),
+        const SectionTitle('📦 Qoldiq'),
+        Container(
+          decoration: BoxDecoration(
+            color: palette.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: palette.line),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tabaka — nechta dona qoldig\'i bor',
+                style: TextStyle(color: palette.mut, fontSize: 11.5),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _tabakaController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                ],
+                decoration: const InputDecoration(
+                  hintText: 'dona, masalan 12',
+                  isDense: true,
+                ),
+              ),
             ],
           ),
         ),

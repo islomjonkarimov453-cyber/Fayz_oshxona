@@ -284,6 +284,7 @@ class SaleSerializer(serializers.ModelSerializer):
                 (
                     Decimal(str(quantity)) * Decimal(str(price_map.get(key, 0)))
                     for key, quantity in items.items()
+                    if key != '_fish' and isinstance(quantity, (int, float))
                 ),
                 Decimal('0'),
             )
@@ -322,10 +323,11 @@ class SaleSerializer(serializers.ModelSerializer):
 class AppStateSerializer(serializers.ModelSerializer):
     seqS = serializers.IntegerField(source='seq_s', required=False, min_value=0)
     fishList = serializers.JSONField(source='fish_list', required=False)
+    stock = serializers.JSONField(required=False)
 
     class Meta:
         model = AppState
-        fields = ['prices', 'service', 'seq', 'seqS', 'fishList']
+        fields = ['prices', 'service', 'seq', 'seqS', 'fishList', 'stock']
         extra_kwargs = {
             'prices': {'required': False},
             'service': {'required': False},
@@ -360,6 +362,20 @@ class AppStateSerializer(serializers.ModelSerializer):
         if not isinstance(value, list):
             raise serializers.ValidationError('fishList must be a list')
         return value
+
+    def validate_stock(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('stock must be an object')
+        result = {}
+        for key, raw in value.items():
+            try:
+                number = float(raw)
+            except (TypeError, ValueError):
+                raise serializers.ValidationError(f'{key} is invalid')
+            if number < 0:
+                raise serializers.ValidationError(f'{key} must be zero or positive')
+            result[key] = int(number) if number.is_integer() else number
+        return result
 
     def update(self, instance, validated_data):
         if 'prices' in validated_data:

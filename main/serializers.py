@@ -330,6 +330,7 @@ def sale_create_fields(data):
             (
                 _decimal(quantity, 'quantity') * _decimal(price_map.get(key, 0), 'price')
                 for key, quantity in items.items()
+                if key != '_fish' and isinstance(quantity, (int, float))
             ),
             Decimal('0'),
         )
@@ -424,4 +425,17 @@ def settings_fields(data, instance=None, partial=False):
         if not isinstance(raw, list):
             raise ValueError('fishList must be a list')
         fields['fish_list'] = raw
+    if 'stock' in data:
+        raw = data.get('stock')
+        if raw is None:
+            raw = {}
+        if not isinstance(raw, dict):
+            raise ValueError('stock must be an object')
+        stock = {}
+        for key, value in raw.items():
+            number = _plain_number(value, 'stock')
+            if float(number) < 0:
+                raise ValueError('stock must be zero or positive')
+            stock[key] = number
+        fields['stock'] = stock
     return fields

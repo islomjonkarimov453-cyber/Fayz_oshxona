@@ -201,9 +201,13 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     final fee = (subtotal * pct / 100).roundToDouble();
 
     try {
+      final saleItems = <String, dynamic>{...items};
+      if (_fishOrders.isNotEmpty) {
+        saleItems['_fish'] = List<Map<String, dynamic>>.from(_fishOrders);
+      }
       final sale = await _store.createSale({
         'table': _key,
-        'items': items,
+        'items': saleItems,
         'sub': subtotal,
         'pct': pct.round(),
         'fee': fee,
@@ -300,7 +304,6 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                 onTogglePicker: () =>
                     setState(() => _fishPicker = !_fishPicker),
                 onPickFish: (entry) => _askOnion(entry.key, entry.kg),
-                onQuickAdd: (key) => _askOnion(key, 0.5),
               ),
               const SizedBox(height: 8),
               Container(
@@ -461,7 +464,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${money(price)} so\'m / $unit'
-                  '${existing > 0 ? '  ·  buyurtmada: ${quantityText(existing)} $unit' : ''}',
+                  '${existing > 0 ? '  ·  buyurtmada: ${quantityText(existing)} $unit' : ''}'
+                  '${key == 'tabaka' ? '  ·  qoldiq: ${quantityText(_store.snapshot.stock['tabaka'] ?? 0)} dona' : ''}',
                   style: TextStyle(color: palette.mut, fontSize: 11.5),
                 ),
               ],
@@ -540,46 +544,19 @@ class _FishSection extends StatefulWidget {
     required this.pickerOpen,
     required this.onTogglePicker,
     required this.onPickFish,
-    required this.onQuickAdd,
   });
 
   final AppStore store;
   final bool pickerOpen;
   final VoidCallback onTogglePicker;
   final ValueChanged<FishStock> onPickFish;
-  final ValueChanged<String> onQuickAdd;
 
   @override
   State<_FishSection> createState() => _FishSectionState();
 }
 
 class _FishSectionState extends State<_FishSection> {
-  final TextEditingController _kgController = TextEditingController();
-  List<FishStock> _results = [];
-  bool _searched = false;
-
-  @override
-  void dispose() {
-    _kgController.dispose();
-    super.dispose();
-  }
-
-  void _search() {
-    final text = _kgController.text.trim().replaceAll(',', '.');
-    final kg = double.tryParse(text);
-    setState(() {
-      _searched = true;
-      if (kg == null || kg <= 0) {
-        _results = [];
-        return;
-      }
-      _results = widget.store.snapshot.fishList
-          .where((entry) => (entry.kg - kg).abs() <= 0.5)
-          .toList()
-        ..sort((a, b) => (a.kg - kg).abs().compareTo((b.kg - kg).abs()));
-      if (_results.length > 6) _results = _results.sublist(0, 6);
-    });
-  }
+  String _cat = 'sazan';
 
   @override
   Widget build(BuildContext context) {
@@ -618,130 +595,71 @@ class _FishSectionState extends State<_FishSection> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: palette.line),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            child: Builder(
+              builder: (context) {
+                final entries = store.snapshot.fishList
+                    .where((entry) => entry.key == _cat)
+                    .toList();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _kgController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                        ],
-                        decoration: const InputDecoration(
-                          hintText: 'Og\'irligi (kg), masalan 1.3',
-                          isDense: true,
-                        ),
-                        onSubmitted: (_) => _search(),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: fishKeys.map((key) {
+                        final selected = key == _cat;
+                        return ChoiceChip(
+                          label: Text(productByKey(key).name),
+                          selected: selected,
+                          onSelected: (_) =>
+                              setState(() => _cat = key),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                    if (entries.isEmpty)
+                      Text(
+                        'Bu turdagi baliq hali kiritilmagan',
+                        style: TextStyle(color: palette.mut, fontSize: 12),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: entries.map((entry) {
+                          final def = productByKey(entry.key);
+                          return OutlinedButton(
+                            onPressed: () => widget.onPickFish(entry),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${quantityText(entry.kg)} kg',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  '${def.name} · ${money(store.price(entry.key))} so\'m/kg',
+                                  style: TextStyle(
+                                    color: palette.mut,
+                                    fontSize: 10.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: _search,
-                      icon: const Icon(Icons.search, size: 18),
-                      label: const Text('Qidirish'),
-                    ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                if (_searched && _results.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text(
-                      '😕 Bunday og\'irlikdagi baliq yo\'q',
-                      style: TextStyle(
-                        color: palette.bad,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                  )
-                else if (_results.isNotEmpty)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _results.map((entry) {
-                      final def = productByKey(entry.key);
-                      return OutlinedButton(
-                        onPressed: () => widget.onPickFish(entry),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              def.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              '${quantityText(entry.kg)} kg · ${money(store.price(entry.key))} so\'m/kg',
-                              style: TextStyle(
-                                color: palette.mut,
-                                fontSize: 10.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                if (!_searched)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      'Admin kiritgan baliq og\'irligini yozing',
-                      style: TextStyle(color: palette.mut, fontSize: 11.5),
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                Text(
-                  'yoki tez qo\'shish:',
-                  style: TextStyle(color: palette.mut, fontSize: 11.5),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: fishKeys.map((key) {
-                    final def = productByKey(key);
-                    return OutlinedButton(
-                      onPressed: () => widget.onQuickAdd(key),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            def.name,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            '+0.5 kg',
-                            style: TextStyle(
-                              color: palette.mut,
-                              fontSize: 10.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                );
+              },
             ),
           ),
       ],

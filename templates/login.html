@@ -28,6 +28,12 @@
   .user-chip .meta{flex:1}
   .user-chip .role{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
   .user-chip .arrow{color:var(--mut);font-size:18px}
+  .apk-box{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+  .apk-title{font-size:13px;font-weight:700;color:var(--mut);text-align:center;margin-bottom:10px}
+  .apk-links{display:flex;flex-direction:column;gap:8px}
+  .apk-link{display:block;text-align:center;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--tx);font-weight:600;font-size:14px;text-decoration:none}
+  .apk-link:active{border-color:var(--pri)}
+  .apk-note{margin-top:10px;font-size:11px;color:var(--mut);text-align:center;line-height:1.4}
 </style>
 </head>
 <body>
@@ -60,6 +66,16 @@
       <button class="btn" type="submit">Kirish</button>
     </div>
   </form>
+  <div class="apk-box">
+    <div class="apk-title">📱 Mobil ilovani yuklab olish</div>
+    <div class="apk-links">
+      <a class="apk-link" href="{% static 'app-release.apk' %}" download>⬇ Barchasi (rol tanlash)</a>
+      <a class="apk-link" href="{% static 'fayz-ofitsiant.apk' %}" download>⬇ Ofitsiant</a>
+      <a class="apk-link" href="{% static 'fayz-oshpaz.apk' %}" download>⬇ Oshpaz</a>
+      <a class="apk-link" href="{% static 'fayz-admin.apk' %}" download>⬇ Admin</a>
+    </div>
+    <div class="apk-note">APK o'rnatish uchun telefonda "Noma'lum manbalardan o'rnatish" ruxsatini bering.</div>
+  </div>
 </div>
 <script>
 (function(){

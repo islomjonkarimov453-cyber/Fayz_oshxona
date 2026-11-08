@@ -185,6 +185,7 @@ class AppSnapshot {
     required this.seqS,
     required this.rev,
     required this.fishList,
+    required this.stock,
   });
 
   final Map<String, double> prices;
@@ -196,6 +197,7 @@ class AppSnapshot {
   final int seqS;
   final int rev;
   final List<FishStock> fishList;
+  final Map<String, double> stock;
 
   static const empty = AppSnapshot(
     prices: {},
@@ -207,6 +209,7 @@ class AppSnapshot {
     seqS: 0,
     rev: 0,
     fishList: [],
+    stock: {},
   );
 
   factory AppSnapshot.fromJson(Map<String, dynamic> json) {
@@ -261,6 +264,7 @@ class AppSnapshot {
       seqS: asInt(json['seqS']),
       rev: asInt(json['_rev'] ?? json['rev']),
       fishList: fishList,
+      stock: itemsFrom(json['stock']),
     );
   }
 

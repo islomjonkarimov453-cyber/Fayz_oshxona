@@ -14,10 +14,12 @@ DEFAULT_PRICES = {
     'sous': 5000,
     'fanta': 12000,
     'cola': 12000,
+    'tabaka': 45000,
 }
 
 FISH_KEYS = ('sazan', 'oq', 'buxarski', 'ilonbosh')
-OTHER_KEYS = ('non', 'sous', 'fanta', 'cola')
+OTHER_KEYS = ('non', 'sous', 'fanta', 'cola', 'tabaka')
+STOCK_KEYS = ('tabaka',)
 
 PRODUCT_LABELS = {
     'sazan': 'Sazan',
@@ -28,6 +30,7 @@ PRODUCT_LABELS = {
     'sous': 'Sous',
     'fanta': 'Fanta',
     'cola': 'Cola',
+    'tabaka': 'Tabaka',
 }
 
 EVENT_SUBSCRIBERS = []
@@ -90,6 +93,7 @@ def load_state_from_db():
         'seqS': app_state.seq_s,
         'service': app_state.service,
         'fishList': app_state.fish_list or [],
+        'stock': app_state.stock or {},
         '_rev': app_state._rev,
     }
 
@@ -100,6 +104,7 @@ def save_state_to_db(state, app_state, rev):
     app_state.seq = as_int(state.get('seq'), 1)
     app_state.seq_s = as_int(state.get('seqS'), 0)
     app_state.fish_list = state.get('fishList') or state.get('fish_list') or []
+    app_state.stock = state.get('stock') or {}
     app_state._rev = rev
     app_state.save()
 
@@ -187,6 +192,39 @@ def consume_fish_list(items):
     if changed:
         app_state.fish_list = fish_list
         app_state.save(update_fields=['fish_list'])
+        bump_revision()
+    return changed
+
+
+def consume_stock(items):
+    """Sotuv items ichidagi qoldiq bilan kuzatiladigan mahsulotlar (tabaka) sonini kamaytiradi."""
+    if not isinstance(items, dict):
+        return False
+    sold = {}
+    for key in STOCK_KEYS:
+        try:
+            qty = float(items.get(key) or 0)
+        except (TypeError, ValueError):
+            qty = 0
+        if qty > 0:
+            sold[key] = qty
+    if not sold:
+        return False
+    app_state = AppState.get_state()
+    stock = dict(app_state.stock or {})
+    changed = False
+    for key, qty in sold.items():
+        try:
+            current = float(stock.get(key) or 0)
+        except (TypeError, ValueError):
+            current = 0
+        remaining = max(0.0, current - qty)
+        if remaining != current:
+            stock[key] = int(remaining) if remaining == int(remaining) else remaining
+            changed = True
+    if changed:
+        app_state.stock = stock
+        app_state.save(update_fields=['stock'])
         bump_revision()
     return changed
 

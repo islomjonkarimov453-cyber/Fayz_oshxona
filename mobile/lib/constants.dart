@@ -11,7 +11,7 @@ class ProductDef {
 }
 
 const fishKeys = ['sazan', 'oq', 'buxarski', 'ilonbosh'];
-const otherKeys = ['non', 'sous', 'fanta', 'cola'];
+const otherKeys = ['non', 'sous', 'fanta', 'cola', 'tabaka'];
 
 const products = <ProductDef>[
   ProductDef('sazan', 'Sazan', 'kg', 0.5),
@@ -22,6 +22,7 @@ const products = <ProductDef>[
   ProductDef('sous', 'Sous', 'dona', 1),
   ProductDef('fanta', 'Fanta', 'dona', 1),
   ProductDef('cola', 'Cola', 'dona', 1),
+  ProductDef('tabaka', 'Tabaka', 'dona', 1),
 ];
 
 ProductDef productByKey(String key) => products.firstWhere(
@@ -40,6 +41,7 @@ const defaultPrices = <String, double>{
   'sous': 5000,
   'fanta': 12000,
   'cola': 12000,
+  'tabaka': 45000,
 };
 
 const roomCount = 7;
