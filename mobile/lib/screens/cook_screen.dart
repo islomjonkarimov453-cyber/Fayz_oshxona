@@ -18,8 +18,9 @@ class CookScreen extends StatefulWidget {
   State<CookScreen> createState() => _CookScreenState();
 }
 
-class _CookScreenState extends State<CookScreen> {
+class _CookScreenState extends State<CookScreen> with WidgetsBindingObserver {
   bool _alarmOn = false;
+  bool _inBackground = false;
 
   AppStore get _store => widget.store;
 
@@ -31,8 +32,25 @@ class _CookScreenState extends State<CookScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _store.addListener(_onStoreChanged);
     _syncAlarm();
+  }
+
+  /// Ilova fonda bo'lsa — baland alarm uzluksiz chaladi (buyurtma eshitilishi uchun).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _inBackground = true;
+      if (_currentPending.isNotEmpty) {
+        SoundFx.startBackgroundAlarm();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      _inBackground = false;
+      SoundFx.stopBackgroundAlarm();
+      _syncAlarm();
+    }
   }
 
   /// Qabul qilinmagan buyurtma bor-yo'qligiga qarab alarmni yoqadi/o'chiradi.
@@ -41,9 +59,14 @@ class _CookScreenState extends State<CookScreen> {
     if (hasPending == _alarmOn) return;
     _alarmOn = hasPending;
     if (hasPending) {
-      SoundFx.startCookSignal();
+      if (_inBackground) {
+        SoundFx.startBackgroundAlarm();
+      } else {
+        SoundFx.startCookSignal();
+      }
     } else {
       SoundFx.stopSignal();
+      SoundFx.stopBackgroundAlarm();
     }
   }
 
@@ -54,6 +77,8 @@ class _CookScreenState extends State<CookScreen> {
   @override
   void dispose() {
     if (_alarmOn) SoundFx.stopAlarm();
+    SoundFx.stopBackgroundAlarm();
+    WidgetsBinding.instance.removeObserver(this);
     _store.removeListener(_onStoreChanged);
     super.dispose();
   }

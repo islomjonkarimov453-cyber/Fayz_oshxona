@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 /// Ovoz signallari — veb-versiyadagi kabi yumshoq signal.
 ///
@@ -49,4 +50,30 @@ class SoundFx {
   static Future<void> ring() => _play('sounds/cook_ring.wav');
   static void startAlarm() => startCookSignal();
   static void stopAlarm() => stopSignal();
+
+  /// Ilova fonda (background) bo'lganda — baland alarm uzluksiz chaladi,
+  /// shunda oshpaz/ofitsiant telefonni ko'rmasdan ham eshitadi.
+  static Future<void> startBackgroundAlarm() async {
+    _timer?.cancel();
+    _timer = null;
+    try {
+      await _player.stop();
+    } catch (_) {}
+    try {
+      await FlutterRingtonePlayer().playAlarm(
+        looping: true,
+        volume: 1.0,
+        asAlarm: true,
+      );
+    } catch (_) {
+      // Alarm chalmasa ham davom etamiz.
+    }
+  }
+
+  /// Background alarmni to'xtatadi.
+  static Future<void> stopBackgroundAlarm() async {
+    try {
+      await FlutterRingtonePlayer().stop();
+    } catch (_) {}
+  }
 }

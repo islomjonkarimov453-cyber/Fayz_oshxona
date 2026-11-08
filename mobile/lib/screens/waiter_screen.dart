@@ -18,21 +18,41 @@ class WaiterScreen extends StatefulWidget {
   State<WaiterScreen> createState() => _WaiterScreenState();
 }
 
-class _WaiterScreenState extends State<WaiterScreen> {
+class _WaiterScreenState extends State<WaiterScreen> with WidgetsBindingObserver {
   bool _alarmOn = false;
+  bool _inBackground = false;
 
   AppStore get store => widget.store;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     store.addListener(_syncAlarm);
     _syncAlarm();
+  }
+
+  /// Ilova fonda bo'lsa — baland alarm uzluksiz chaladi (taom eshitilishi uchun).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _inBackground = true;
+      if (store.snapshot.readyTickets.isNotEmpty) {
+        SoundFx.startBackgroundAlarm();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      _inBackground = false;
+      SoundFx.stopBackgroundAlarm();
+      _syncAlarm();
+    }
   }
 
   @override
   void dispose() {
     if (_alarmOn) SoundFx.stopAlarm();
+    SoundFx.stopBackgroundAlarm();
+    WidgetsBinding.instance.removeObserver(this);
     store.removeListener(_syncAlarm);
     super.dispose();
   }
@@ -44,9 +64,14 @@ class _WaiterScreenState extends State<WaiterScreen> {
     if (hasReady == _alarmOn) return;
     _alarmOn = hasReady;
     if (hasReady) {
-      SoundFx.startWaiterSignal();
+      if (_inBackground) {
+        SoundFx.startBackgroundAlarm();
+      } else {
+        SoundFx.startWaiterSignal();
+      }
     } else {
       SoundFx.stopSignal();
+      SoundFx.stopBackgroundAlarm();
     }
   }
 

@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'home_shell.dart';
 
 /// Kirish ekrani: username + parol -> o'z sahifasi (rol bo'yicha).
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, required this.store});
+  const LoginScreen({super.key, required this.store, required this.onLoggedIn});
 
   final AppStore store;
+
+  /// Muvaffaqiyatli kirgach chaqiriladi (rol: 'admin' | 'cook' | 'waiter').
+  final ValueChanged<String> onLoggedIn;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -20,8 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _password = TextEditingController();
   bool _busy = false;
   String? _error;
-
-  static const _roleIndex = {'waiter': 0, 'cook': 1, 'admin': 2};
 
   @override
   void dispose() {
@@ -44,13 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       final role = await widget.store.login(username, password);
+      await widget.store.saveSession(username, password, role);
       if (!mounted) return;
-      final index = _roleIndex[role] ?? 2;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => HomeShell(store: widget.store, initialIndex: index, locked: true),
-        ),
-      );
+      widget.onLoggedIn(role);
     } catch (e) {
       if (!mounted) return;
       setState(() {

@@ -14,6 +14,7 @@ class HomeShell extends StatefulWidget {
     required this.store,
     this.initialIndex = 0,
     this.locked = false,
+    this.onLogout,
   });
 
   final AppStore store;
@@ -21,6 +22,9 @@ class HomeShell extends StatefulWidget {
 
   /// true bo'lsa — faqat bitta rol ko'rsatiladi (pastki navigatsiyasiz).
   final bool locked;
+
+  /// Chiqish tugmasi bosilganda chaqiriladi (sessiyani tozalash).
+  final VoidCallback? onLogout;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -96,7 +100,13 @@ class _HomeShellState extends State<HomeShell> {
                 onSelected: (value) {
                   if (value == 'server') _openSettings();
                   if (value == 'refresh') store.refresh();
-                  if (value == 'exit') Navigator.of(context).pop();
+                  if (value == 'exit') {
+                    if (widget.onLogout != null) {
+                      widget.onLogout!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  }
                 },
                 itemBuilder: (_) => [
                   const PopupMenuItem(
@@ -115,15 +125,14 @@ class _HomeShellState extends State<HomeShell> {
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                  if (!widget.locked)
-                    const PopupMenuItem(
-                      value: 'exit',
-                      child: ListTile(
-                        leading: Icon(Icons.logout),
-                        title: Text('Rol tanlashga qaytish'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                  const PopupMenuItem(
+                    value: 'exit',
+                    child: ListTile(
+                      leading: Icon(Icons.logout),
+                      title: Text('Chiqish'),
+                      contentPadding: EdgeInsets.zero,
                     ),
+                  ),
                 ],
               ),
             ],

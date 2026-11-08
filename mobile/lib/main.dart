@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'api.dart';
 import 'screens/home_shell.dart';
 import 'screens/lock_screen.dart';
 import 'screens/login_screen.dart';
@@ -33,19 +34,67 @@ class _FayzAppState extends State<FayzApp> {
   late final AppStore _store;
   bool _unlocked = false;
   bool _unlockChecked = false;
+  bool _sessionChecked = false;
+  int? _roleIndex;
+
+  static const _roleIndexByName = {'waiter': 0, 'cook': 1, 'admin': 2};
 
   @override
   void initState() {
     super.initState();
     _store = AppStore();
     _store.init();
+    // Rol bo'yicha alohida APK (APP_ROLE) — login'siz to'g'ridan-to'g'ri.
+    final forced = _lockedIndex;
+    if (forced != null) {
+      _roleIndex = forced;
+      _sessionChecked = true;
+    }
     isAppUnlocked().then((value) {
       if (!mounted) return;
       setState(() {
         _unlocked = value;
         _unlockChecked = true;
       });
+      if (value) _checkSession();
     });
+  }
+
+  /// Saqlangan sessiya bo'lsa — qayta login so'ramasdan kiradi.
+  Future<void> _checkSession() async {
+    if (_sessionChecked) return;
+    final session = await _store.savedSession();
+    if (session == null) {
+      setState(() => _sessionChecked = true);
+      return;
+    }
+    try {
+      final role = await _store.login(session['username']!, session['password']!);
+      if (!mounted) return;
+      setState(() {
+        _roleIndex = _roleIndexByName[role] ?? 2;
+        _sessionChecked = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      if (e is ApiException && e.offline) {
+        // Serverga ulanib bo'lmadi — saqlangan rol bilan kirmiz.
+        setState(() {
+          _roleIndex = _roleIndexByName[session['role']] ?? 2;
+          _sessionChecked = true;
+        });
+      } else {
+        // Parol o'zgargan — sessiyani tozalab login so'raymiz.
+        await _store.clearSession();
+        setState(() => _sessionChecked = true);
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    await _store.clearSession();
+    if (!mounted) return;
+    setState(() => _roleIndex = null);
   }
 
   @override
@@ -65,19 +114,32 @@ class _FayzAppState extends State<FayzApp> {
       home: AnimatedBuilder(
         animation: _store,
         builder: (context, _) {
-          if (!_store.ready || !_unlockChecked) {
+          if (!_store.ready || !_unlockChecked || !_sessionChecked) {
             return const _SplashScreen();
           }
           if (!_unlocked) {
             return LockScreen(
-              onUnlocked: () => setState(() => _unlocked = true),
+              onUnlocked: () {
+                setState(() => _unlocked = true);
+                _checkSession();
+              },
             );
           }
-          final locked = _lockedIndex;
-          if (locked != null) {
-            return HomeShell(store: _store, initialIndex: locked, locked: true);
+          final roleIndex = _roleIndex;
+          if (roleIndex != null) {
+            return HomeShell(
+              store: _store,
+              initialIndex: roleIndex,
+              locked: true,
+              onLogout: _logout,
+            );
           }
-          return LoginScreen(store: _store);
+          return LoginScreen(
+            store: _store,
+            onLoggedIn: (role) {
+              setState(() => _roleIndex = _roleIndexByName[role] ?? 2);
+            },
+          );
         },
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +16,7 @@ class AppStore extends ChangeNotifier {
   AppStore({ApiClient? api}) : _api = api ?? ApiClient();
 
   static const _prefsKey = 'api_base_url';
+  static const _sessionKey = 'saved_session';
 
   final ApiClient _api;
 
@@ -75,6 +77,49 @@ class AppStore extends ChangeNotifier {
       return data['role'].toString();
     }
     throw ApiException('Kirish xatosi');
+  }
+
+  /// Login sessiyasini eslab qoladi (keyingi ochilishda auto-login).
+  Future<void> saveSession(String username, String password, String role) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _sessionKey,
+        jsonEncode({'username': username, 'password': password, 'role': role}),
+      );
+    } catch (_) {
+      // Saqlab bo'lmasa ham davom etamiz.
+    }
+  }
+
+  /// Saqlangan sessiyani o'qiydi.
+  Future<Map<String, String>?> savedSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      if (raw == null) return null;
+      final data = jsonDecode(raw);
+      if (data is Map && data['username'] != null && data['password'] != null) {
+        return {
+          'username': data['username'].toString(),
+          'password': data['password'].toString(),
+          'role': (data['role'] ?? 'admin').toString(),
+        };
+      }
+    } catch (_) {
+      // Xato bo'lsa sessiya yo'q deb hisoblaymiz.
+    }
+    return null;
+  }
+
+  /// Sessiyani o'chiradi (chiqish).
+  Future<void> clearSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_sessionKey);
+    } catch (_) {
+      // e'tiborsiz
+    }
   }
 
   Future<void> setBaseUrl(String url) async {
