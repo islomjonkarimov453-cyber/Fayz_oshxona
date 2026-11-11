@@ -484,15 +484,16 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     setState(() => _busy = true);
     final pct = _store.servicePercentFor(_key);
     final fee = (subtotal * pct / 100).roundToDouble();
+    final total = round2(subtotal + fee);
 
     try {
       final sale = await _store.createSale({
         'table': _key,
         'items': items,
-        'sub': subtotal,
+        'sub': round2(subtotal),
         'pct': pct.round(),
         'fee': fee,
-        'total': subtotal + fee,
+        'total': total,
         'prices': _store.snapshot.prices,
         'address': _address.text.trim(),
         'linked_table': _store.table(_key).linkedTable,

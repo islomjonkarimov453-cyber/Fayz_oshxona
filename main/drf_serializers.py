@@ -231,6 +231,9 @@ class SaleSerializer(serializers.ModelSerializer):
     items = serializers.JSONField()
     prices = serializers.JSONField(required=False)
     clear_table = serializers.BooleanField(write_only=True, required=False, default=True)
+    sub = serializers.DecimalField(max_digits=20, decimal_places=2, required=False)
+    fee = serializers.DecimalField(max_digits=20, decimal_places=2, required=False)
+    total = serializers.DecimalField(max_digits=20, decimal_places=2, required=False)
 
     class Meta:
         model = Sale
@@ -290,7 +293,7 @@ class SaleSerializer(serializers.ModelSerializer):
                 ),
                 Decimal('0'),
             )
-        validated_data['sub'] = sub
+        validated_data['sub'] = Decimal(str(sub)).quantize(Decimal('0.01'))
 
         pct = validated_data.get('pct')
         if pct is None:
@@ -300,12 +303,12 @@ class SaleSerializer(serializers.ModelSerializer):
         fee = validated_data.get('fee')
         if fee is None:
             fee = Decimal(round(float(sub) * pct / 100))
-        validated_data['fee'] = fee
+        validated_data['fee'] = Decimal(str(fee)).quantize(Decimal('0.01'))
 
         total = validated_data.get('total')
         if total is None:
             total = Decimal(str(sub)) + Decimal(str(fee))
-        validated_data['total'] = total
+        validated_data['total'] = Decimal(str(total)).quantize(Decimal('0.01'))
 
         if not validated_data.get('time'):
             validated_data['time'] = now_ms()

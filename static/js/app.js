@@ -100,10 +100,14 @@ function orderEditor(){
 }
 function fishPicker(){
   if(pendFish)return `<div class="card" style="margin-top:8px;border-color:var(--warn)"><b>🐟 ${ITEMS.find(x=>x[0]===pendFish.key)[1]} — ${kg(pendFish.kg)} kg</b><div style="margin:8px 0;color:var(--mut);font-size:13px">Qanday tayyorlaymiz?</div><div class="grid"><button class="btn ok" onclick="confirmFish('sovusli','butun')">🧅 Sovusli · Butun</button><button class="btn" onclick="confirmFish('sovusli','kusok')">🧅 Sovusli · Kusok</button><button class="btn" onclick="confirmFish('sovussiz','butun')">Sovussiz · Butun</button><button class="btn" onclick="confirmFish('sovussiz','kusok')">Sovussiz · Kusok</button></div></div>`;
-  const list=(S.fishList||[]).filter(e=>e.key===fishCat);
-  let h=`<div style="margin-top:8px"><div class="grid" style="grid-template-columns:repeat(4,1fr);gap:6px">${FISH.map(k=>`<button class="btn ${fishCat===k?'':'ghost'}" style="padding:8px 4px;font-size:13px" onclick="fishCat='${k}';render()">${ITEMS.find(x=>x[0]===k)[1]}</button>`).join('')}</div>`;
-  if(!list.length)h+='<div style="color:var(--mut);font-size:12px;margin-top:8px">Bu turdagi baliq hali kiritilmagan</div>';
-  else h+='<div class="grid" style="margin-top:8px">'+list.map(e=>`<button class="btn" onclick="pickFish(${e.id})">${kg(e.kg)} kg<br><small>${f(S.prices[e.key]||0)} soʻm/kg</small></button>`).join('')+'</div>';
+  const list=S.fishList||[];
+  let h=`<div style="margin-top:8px">`;
+  FISH.forEach(k=>{
+    const entries=list.filter(e=>e.key===k);
+    if(!entries.length)return;
+    h+=`<div style="font-weight:700;margin:8px 0 4px;color:var(--mut)">${ITEMS.find(x=>x[0]===k)[1]}</div><div class="grid">${entries.map(e=>`<button class="btn" onclick="pickFish(${e.id})">${kg(e.kg)} kg<br><small>${f(S.prices[e.key]||0)} soʻm/kg</small></button>`).join('')}</div>`;
+  });
+  if(!list.length)h+='<div style="color:var(--mut);font-size:12px;margin-top:8px">Hali baliq kiritilmagan</div>';
   return h+'</div>';
 }
 function pickFish(id){const e=(S.fishList||[]).find(x=>x.id===id);if(e){pendFish={key:e.key,kg:e.kg};render()}}
@@ -152,10 +156,19 @@ async function send(){
       if(S.tables[tb])await api(`/table-states/${encodeURIComponent(tb)}/`,{method:'PATCH',body:JSON.stringify(body)});
       else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:tb,...body})});
     }
-    if(draftFish.length){
-      const fi=fishQtyMap(draftFish);
-      fi._fish=draftFish.map(x=>({key:x.key,kg:x.kg,onion:x.onion,cut:x.cut}));
-      await api('/tickets/',{method:'POST',body:JSON.stringify({table:tb,items:fi})});
+    const fishChanged=draftFish.length>0||fishDirty;
+    if(fishChanged){
+      const fresh=await api('/state/');
+      const tickets=((fresh&&fresh.state&&fresh.state.tickets)||[]).filter(x=>x.table===tb);
+      for(const x of tickets.filter(y=>!y.done))await api(`/tickets/${x.id}/`,{method:'DELETE'});
+      const cooked={};
+      tickets.filter(y=>y.done).forEach(y=>{((y.items&&y.items._fish)||[]).forEach(d=>{cooked[d.key+'|'+r2(+d.kg||0)+'|'+d.onion+'|'+d.cut]=1})});
+      const uncooked=fishAll.filter(d=>!cooked[d.key+'|'+r2(+d.kg||0)+'|'+d.onion+'|'+d.cut]);
+      if(uncooked.length){
+        const fi=fishQtyMap(uncooked);
+        fi._fish=uncooked.map(x=>({key:x.key,kg:x.kg,onion:x.onion,cut:x.cut}));
+        await api('/tickets/',{method:'POST',body:JSON.stringify({table:tb,items:fi})});
+      }
     }
     draft={};draftFish=[];fishDirty=false;curFish=fishFromItems(items);
     await sync();
@@ -168,9 +181,9 @@ async function closeT(){
   const t=S.tables[tb]||{items:{}};
   const items=buildItems(t.items,draft,curFish.concat(draftFish));
   if(!money(items))return;
-  const sub=money(items),pct=pctFor(tb),feeAmt=fee(sub,tb);
+  const sub=r2(money(items)),pct=pctFor(tb),feeAmt=fee(sub,tb);
   const sale={
-    table:tb,items,sub,pct,fee:feeAmt,total:sub+feeAmt,
+    table:tb,items,sub,pct,fee:feeAmt,total:r2(sub+feeAmt),
     prices:{...S.prices},address:t.address||'',linked_table:t.linked_table||'',clear_table:true
   };
   mutating=true;
@@ -193,7 +206,7 @@ function receipt(s){
 /* ---------- OSHPAZ ---------- */
 function ticketLines(t){
   const det=(t.items&&t.items._fish)||[];
-  if(det.length)return det.map(x=>`<li><b>${ITEMS.find(i=>i[0]===x.key)?.[1]||x.key}</b> — ${kg(x.kg)} kg · ${x.onion==='sovusli'?'🧅 Sovusli':'Sovussiz'} · ${x.cut==='kusok'?'Kusok':'Butun'}</li>`).join('');
+  if(det.length)return det.map(x=>`<li><b>${ITEMS.find(i=>i[0]===x.key)?.[1]||x.key}</b> — ${kg(x.kg)} kg · ${x.onion==='sovusli'?' Sovusli':'Sovussiz'} · ${x.cut==='kusok'?'Kusok':'Butun'}</li>`).join('');
   return ITEMS.filter(([k])=>t.items[k]).map(([k,n,u])=>`<li><b>${n}</b> — ${kg(t.items[k])} ${u}</li>`).join('');
 }
 function cook(){
@@ -283,7 +296,7 @@ function admin(){
   const inp=k=>`<div><label>${nm(k)} (soʻm)</label><input type="number" min="0" value="${S.prices[k]}" onchange="setP('${k}',this.value)"></div>`;
   let b='';
   if(atab==='home'){
-    const busy=Object.entries(S.tables);
+    const busy=Object.entries(S.tables).filter(([n,t])=>money(t.items)>0);
     b=`<div class="grid">${kpi(f(rev)+SM,'Umumiy tushum (xizmat bilan)','var(--pri)')}${kpi(f(rev-fees)+SM,'Taomlar summasi','var(--ok)')}${kpi(f(fees)+SM,'Xizmat haqi','var(--warn)')}${kpi(sl.length,'Chiqarilgan cheklar','var(--mut)')}${kpi(kg(fishKg)+' kg','Sotilgan baliq','var(--pri)')}${kpi(busy.filter(([n])=>!isS(n)).length+' / '+ROOMS,'Hozir band honalar','var(--bad)')}</div>
     <h2>Hozir band honalar</h2><div class="card">${busy.map(([n,t])=>`<div class="row"><div class="n"><b>${lbl(n)}</b>${t.address?`<br><small style="color:var(--mut)">📍 ${esc(t.address)}</small>`:''}</div><div class="sum">${f(grand(t.items,n))}${SM}</div></div>`).join('')||'<span style="color:var(--mut)">Hamma hona boʻsh</span>'}</div>
     <h2>Oxirgi cheklar</h2>${salesTable(sl.slice(-5).reverse())}`;

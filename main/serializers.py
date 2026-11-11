@@ -325,7 +325,7 @@ def sale_create_fields(data):
     price_map = {key: _plain_number(value, 'price') for key, value in price_map.items()}
 
     if data.get('sub') is not None:
-        sub = _decimal(data.get('sub'), 'sub')
+        sub = _decimal(data.get('sub'), 'sub').quantize(Decimal('0.01'))
     else:
         sub = sum(
             (
@@ -334,21 +334,21 @@ def sale_create_fields(data):
                 if key != '_fish' and isinstance(quantity, (int, float))
             ),
             Decimal('0'),
-        )
+        ).quantize(Decimal('0.01'))
 
     pct = as_int(data.get('pct'), 0)
     if pct < 0 or pct > 100:
         raise ValueError('pct must be between 0 and 100')
 
     if data.get('fee') is not None:
-        fee = _decimal(data.get('fee'), 'fee')
+        fee = _decimal(data.get('fee'), 'fee').quantize(Decimal('0.01'))
     else:
-        fee = Decimal(round(float(sub) * pct / 100))
+        fee = Decimal(round(float(sub) * pct / 100)).quantize(Decimal('0.01'))
 
     if data.get('total') is not None:
-        total = _decimal(data.get('total'), 'total')
+        total = _decimal(data.get('total'), 'total').quantize(Decimal('0.01'))
     else:
-        total = sub + fee
+        total = (sub + fee).quantize(Decimal('0.01'))
 
     last_sale = Sale.objects.order_by('-id').first()
     sale_id = as_int(data.get('id'), 0) or ((last_sale.id if last_sale else 0) + 1)
