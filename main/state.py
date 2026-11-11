@@ -10,6 +10,7 @@ DEFAULT_PRICES = {
     'oq': 90000,
     'buxarski': 100000,
     'ilonbosh': 110000,
+    'amur': 95000,
     'non': 3000,
     'sous': 5000,
     'fanta': 12000,
@@ -17,7 +18,7 @@ DEFAULT_PRICES = {
     'tabaka': 45000,
 }
 
-FISH_KEYS = ('sazan', 'oq', 'buxarski', 'ilonbosh')
+FISH_KEYS = ('sazan', 'oq', 'buxarski', 'ilonbosh', 'amur')
 OTHER_KEYS = ('non', 'sous', 'fanta', 'cola', 'tabaka')
 STOCK_KEYS = ('tabaka',)
 
@@ -26,6 +27,7 @@ PRODUCT_LABELS = {
     'oq': 'Oq baliq',
     'buxarski': 'Buxarski',
     'ilonbosh': 'Ilonbosh',
+    'amur': 'Amur',
     'non': 'Non',
     'sous': 'Sous',
     'fanta': 'Fanta',
@@ -73,8 +75,9 @@ def get_rev():
 def load_state_from_db():
     app_state = AppState.get_state()
 
-    if not app_state.prices:
-        app_state.prices = dict(DEFAULT_PRICES)
+    prices = {**DEFAULT_PRICES, **(app_state.prices or {})}
+    if prices != (app_state.prices or {}):
+        app_state.prices = prices
         app_state.save(update_fields=['prices'])
 
     tables = {}
@@ -119,6 +122,7 @@ def save_state_to_db(state, app_state, rev):
         table_state.items = data.get('items') or {}
         table_state.address = data.get('address')
         table_state.saboy = as_bool(data.get('saboy', False))
+        table_state.linked_table = str(data.get('linked_table', data.get('linkedTable')) or '').strip() or None
         table_state.save()
     TableState.objects.exclude(table_key__in=keep_tables).delete()
 
@@ -159,6 +163,7 @@ def save_state_to_db(state, app_state, rev):
         sale.total = data.get('total') or 0
         sale.address = data.get('address')
         sale.prices = data.get('prices') or {}
+        sale.linked_table = str(data.get('linked_table', data.get('linkedTable')) or '').strip() or None
         sale.save()
     Sale.objects.exclude(id__in=keep_sales).delete()
 

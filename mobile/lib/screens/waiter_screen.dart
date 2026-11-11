@@ -83,6 +83,58 @@ class _WaiterScreenState extends State<WaiterScreen> with WidgetsBindingObserver
     );
   }
 
+  Future<void> _newSaboy(BuildContext context) async {
+    if (store.mutating) return;
+    final snapshot = store.snapshot;
+    final rooms = <String>[
+      for (var i = 1; i <= roomCount; i++) '$i',
+      ...snapshot.tables.keys.where(
+        (key) =>
+            !isSaboyKey(key) &&
+            int.tryParse(key) != null &&
+            int.parse(key) > roomCount,
+      ),
+    ]..sort((a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0));
+    final linked = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Qaysi hona uchun saboy?'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: rooms
+                .map(
+                  (key) => ListTile(
+                    title: Text('Hona $key'),
+                    subtitle: (snapshot.tables[key]?.items.isNotEmpty ?? false)
+                        ? const Text('Band')
+                        : null,
+                    onTap: () => Navigator.of(dialogContext).pop(key),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+        ],
+      ),
+    );
+    if (linked == null || !context.mounted) return;
+    try {
+      final key = await store.createSaboy(linkedTable: linked);
+      if (context.mounted) _openTable(context, key);
+    } catch (error) {
+      if (context.mounted) {
+        showMessage(context, errorMessage(error), error: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
@@ -123,6 +175,17 @@ class _WaiterScreenState extends State<WaiterScreen> with WidgetsBindingObserver
                     )),
                 const SizedBox(height: 6),
               ],
+              FilledButton.icon(
+                onPressed: store.mutating ? null : () => _newSaboy(context),
+                icon: const Icon(Icons.takeout_dining),
+                label: const Text('SABOY (olib ketadi)'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: palette.warn,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
@@ -250,7 +313,7 @@ class _ReadyAlert extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '🔥 ${tableLabel(ticket.table)}: baliq pishdi!',
+                  '🔥 ${tableLabel(ticket.table)}: baliq tayyor!',
                   style: TextStyle(
                     color: palette.tx,
                     fontWeight: FontWeight.w800,
@@ -273,7 +336,7 @@ class _ReadyAlert extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             onPressed: store.mutating ? null : onAck,
-            child: const Text('Olib bordim'),
+            child: const Text('Yetkazildi'),
           ),
         ],
       ),
@@ -422,6 +485,11 @@ class _SaboyRow extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    if (table.linkedTable.isNotEmpty)
+                      Text(
+                        'Hona ${table.linkedTable}',
+                        style: TextStyle(color: palette.warn, fontSize: 12),
+                      ),
                     if (table.address.isNotEmpty)
                       Text(
                         '📍 ${table.address}',

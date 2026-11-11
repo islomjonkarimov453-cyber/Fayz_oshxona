@@ -10,7 +10,7 @@ class ProductDef {
   final double step;
 }
 
-const fishKeys = ['sazan', 'oq', 'buxarski', 'ilonbosh'];
+const fishKeys = ['sazan', 'oq', 'buxarski', 'ilonbosh', 'amur'];
 const otherKeys = ['non', 'sous', 'fanta', 'cola', 'tabaka'];
 
 const products = <ProductDef>[
@@ -18,6 +18,7 @@ const products = <ProductDef>[
   ProductDef('oq', 'Oq baliq', 'kg', 0.5),
   ProductDef('buxarski', 'Buxarski', 'kg', 0.5),
   ProductDef('ilonbosh', 'Ilonbosh', 'kg', 0.5),
+  ProductDef('amur', 'Amur baliq', 'kg', 0.5),
   ProductDef('non', 'Non', 'dona', 1),
   ProductDef('sous', 'Sous', 'dona', 1),
   ProductDef('fanta', 'Fanta', 'dona', 1),
@@ -37,6 +38,7 @@ const defaultPrices = <String, double>{
   'oq': 90000,
   'buxarski': 100000,
   'ilonbosh': 110000,
+  'amur': 95000,
   'non': 3000,
   'sous': 5000,
   'fanta': 12000,

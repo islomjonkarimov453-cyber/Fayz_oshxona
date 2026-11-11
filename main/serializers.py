@@ -77,6 +77,7 @@ def table_state_dict(obj):
         'items': obj.items or {},
         'address': obj.address or '',
         'saboy': obj.saboy,
+        'linked_table': obj.linked_table or '',
     }
 
 
@@ -364,6 +365,7 @@ def sale_create_fields(data):
         'total': total,
         'address': data.get('address') or '',
         'prices': price_map,
+        'linked_table': str(data.get('linked_table', data.get('linkedTable')) or '').strip() or None,
     }
     clear_table = as_bool(data.get('clear_table', data.get('close_table', True)))
     return fields, sale_id, clear_table
@@ -385,6 +387,8 @@ def table_state_fields(data, partial=False):
         fields['address'] = data.get('address') or ''
     if 'saboy' in data or not partial:
         fields['saboy'] = as_bool(data.get('saboy', False))
+    if 'linked_table' in data or 'linkedTable' in data:
+        fields['linked_table'] = str(data.get('linked_table', data.get('linkedTable')) or '').strip() or None
     return fields
 
 

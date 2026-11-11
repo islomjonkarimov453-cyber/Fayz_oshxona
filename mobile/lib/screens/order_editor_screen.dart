@@ -7,6 +7,25 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
+List<FishOrder> _fishFromTable(TableData table) {
+  final details = table.fishOrders
+      .where((order) => fishKeys.contains(order.key) && order.kg > 0)
+      .toList();
+  final covered = <String, double>{};
+  for (final order in details) {
+    covered[order.key] = round2((covered[order.key] ?? 0) + order.kg);
+  }
+  final result = List<FishOrder>.from(details);
+  for (final key in fishKeys) {
+    final qty = table.items[key] ?? 0;
+    final remaining = round2(qty - (covered[key] ?? 0));
+    if (remaining > 0.001) {
+      result.add(FishOrder(key: key, kg: remaining, onion: 'sovussiz', cut: 'butun'));
+    }
+  }
+  return result;
+}
+
 /// Buyurtma tahrirlash: miqdor kiritish, oshxonaga yuborish va chek yopish.
 class OrderEditorScreen extends StatefulWidget {
   const OrderEditorScreen({
@@ -24,7 +43,10 @@ class OrderEditorScreen extends StatefulWidget {
 
 class _OrderEditorScreenState extends State<OrderEditorScreen> {
   final Map<String, double> _draft = {};
+  final Set<String> _removed = {};
   final List<Map<String, dynamic>> _fishOrders = [];
+  List<FishOrder> _existingFish = [];
+  bool _fishDirty = false;
   final TextEditingController _address = TextEditingController();
   bool _fishPicker = false;
   bool _busy = false;
@@ -36,6 +58,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   void initState() {
     super.initState();
     _address.text = _store.table(_key).address;
+    _existingFish = _fishFromTable(_store.table(_key));
   }
 
   @override
@@ -46,12 +69,64 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
   Map<String, double> get _existing => _store.table(_key).items;
 
-  Map<String, double> get _combined =>
-      _store.mergedItems(_key, _draft);
+  List<FishOrder> get _allFish => [
+        ..._existingFish,
+        ..._fishOrders.map(
+          (order) => FishOrder.fromJson(Map<String, dynamic>.from(order)),
+        ),
+      ];
 
-  double get _newSubtotal => _store.snapshot.money(_draft);
+  Map<String, double> _numericItems() {
+    final items = <String, double>{};
+    _existing.forEach((key, value) {
+      if (!fishKeys.contains(key) && key != '_fish' && !_removed.contains(key)) {
+        items[key] = value;
+      }
+    });
+    _draft.forEach((key, value) {
+      if (value > 0 && !fishKeys.contains(key) && !_removed.contains(key)) {
+        items[key] = round2((items[key] ?? 0) + value);
+      }
+    });
+    final quantities = <String, double>{};
+    for (final order in _allFish) {
+      if (order.kg > 0) {
+        quantities[order.key] = round2((quantities[order.key] ?? 0) + order.kg);
+      }
+    }
+    quantities.forEach((key, value) => items[key] = value);
+    return items;
+  }
+
+  Map<String, dynamic> _billItems() {
+    final items = <String, dynamic>{..._numericItems()};
+    if (_allFish.isNotEmpty) {
+      items['_fish'] = _allFish
+          .map(
+            (order) => {
+              'key': order.key,
+              'kg': order.kg,
+              'onion': order.onion,
+              'cut': order.cut,
+            },
+          )
+          .toList();
+    }
+    return items;
+  }
+
+  Map<String, double> get _combined => _numericItems();
+
+  double get _newSubtotal =>
+      _store.snapshot.money(_draft) +
+      _fishOrders.fold<double>(
+        0,
+        (sum, order) =>
+            sum + asDouble(order['kg']) * _store.price((order['key'] ?? '').toString()),
+      );
 
   void _setDraft(String key, double value) {
+    if (_removed.contains(key)) return;
     setState(() {
       if (value <= 0) {
         _draft.remove(key);
@@ -109,6 +184,35 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     return double.tryParse(normalized);
   }
 
+  Future<void> _deleteExisting(String key) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Mahsulotni o‘chirish'),
+        content: Text('${productName(key)} ni buyurtmadan o‘chirasizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Yo‘q'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Ha'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      _removed.add(key);
+      _draft.remove(key);
+    });
+  }
+
+  void _restoreExisting(String key) {
+    setState(() => _removed.remove(key));
+  }
+
   Future<void> _saveAddress() async {
     final text = _address.text.trim();
     if (text == _store.table(_key).address) return;
@@ -120,13 +224,13 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     );
   }
 
-  /// Baliq tanlangach: sovusli/sovussiz so'raladi, tanlov oshpazga boradi.
+  /// Baliq tanlangach: sovusli/sovussiz va butun/kusok so'raladi.
   Future<void> _askOnion(String key, double kg) async {
     final onion = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('${productName(key)} — ${quantityText(kg)} kg'),
-        content: const Text('Qanday tayyorlaymiz?'),
+        content: const Text('Piyoz turi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop('sovussiz'),
@@ -140,22 +244,193 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       ),
     );
     if (onion == null || !mounted) return;
+    final cut = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${productName(key)} — ${quantityText(kg)} kg'),
+        content: const Text('Butun yoki kusok?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('butun'),
+            child: const Text('Butun'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop('kusok'),
+            child: const Text('Kusok'),
+          ),
+        ],
+      ),
+    );
+    if (cut == null || !mounted) return;
     setState(() {
-      _draft[key] = round2((_draft[key] ?? 0) + kg);
-      _fishOrders.add({'key': key, 'kg': kg, 'onion': onion});
+      _fishOrders.add({'key': key, 'kg': kg, 'onion': onion, 'cut': cut});
     });
   }
 
+  Future<void> _editExistingFish(int index) async {
+    final order = _existingFish[index];
+    final kgController = TextEditingController(text: quantityText(order.kg));
+    var onion = order.onion;
+    var cut = order.cut;
+    final result = await showDialog<FishOrder>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${productName(order.key)} — tahrirlash'),
+        content: StatefulBuilder(
+          builder: (dialogContext, setDialogState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: kgController,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                ],
+                decoration: const InputDecoration(labelText: 'Og\'irligi (kg)'),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                initialValue: onion,
+                decoration: const InputDecoration(labelText: 'Piyoz'),
+                items: const [
+                  DropdownMenuItem(value: 'sovusli', child: Text('Sovusli')),
+                  DropdownMenuItem(value: 'sovussiz', child: Text('Sovussiz')),
+                ],
+                onChanged: (value) =>
+                    setDialogState(() => onion = value ?? onion),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                initialValue: cut,
+                decoration: const InputDecoration(labelText: 'Shakli'),
+                items: const [
+                  DropdownMenuItem(value: 'butun', child: Text('Butun')),
+                  DropdownMenuItem(value: 'kusok', child: Text('Kusok')),
+                ],
+                onChanged: (value) =>
+                    setDialogState(() => cut = value ?? cut),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final kg = asDouble(kgController.text);
+              if (kg <= 0) return;
+              Navigator.of(dialogContext).pop(
+                FishOrder(key: order.key, kg: kg, onion: onion, cut: cut),
+              );
+            },
+            child: const Text('Saqlash'),
+          ),
+        ],
+      ),
+    );
+    kgController.dispose();
+    if (result == null || !mounted) return;
+    setState(() {
+      _existingFish[index] = result;
+      _fishDirty = true;
+    });
+  }
+
+  Future<void> _deleteFishAt(int index) async {
+    final existing = index < _existingFish.length;
+    if (existing) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Baliqni o\'chirish'),
+          content: const Text('Bu baliqni buyurtmadan o\'chirasizmi?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Yo\'q'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Ha'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+      setState(() {
+        _existingFish.removeAt(index);
+        _fishDirty = true;
+      });
+    } else {
+      setState(() => _fishOrders.removeAt(index - _existingFish.length));
+    }
+  }
+
+  Widget _fishRow(BuildContext context, int index, FishOrder order) {
+    final palette = AppPalette.of(context);
+    final existing = index < _existingFish.length;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: palette.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: palette.line),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  productName(order.key),
+                  style: TextStyle(
+                    color: palette.tx,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '${quantityText(order.kg)} kg · ${order.onionLabel} · ${order.cutLabel}${existing ? '' : ' · yangi'}',
+                  style: TextStyle(color: palette.mut, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          if (existing)
+            IconButton(
+              icon: Icon(Icons.edit_outlined, size: 20, color: palette.pri),
+              onPressed: () => _editExistingFish(index),
+            ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, size: 20, color: palette.bad),
+            onPressed: () => _deleteFishAt(index),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _send() async {
-    if (_busy || _newSubtotal <= 0) return;
+    if (_busy ||
+        (_newSubtotal <= 0 &&
+            _fishOrders.isEmpty &&
+            !_fishDirty &&
+            _removed.isEmpty)) {
+      return;
+    }
     setState(() => _busy = true);
 
-    final draft = Map<String, double>.from(_draft);
-    final merged = _store.mergedItems(_key, draft);
+    final items = _billItems();
     final fish = <String, double>{};
-    for (final key in fishKeys) {
-      final quantity = draft[key] ?? 0;
-      if (quantity > 0) fish[key] = quantity;
+    for (final order in _fishOrders) {
+      final key = (order['key'] ?? '').toString();
+      final quantity = asDouble(order['kg']);
+      if (quantity > 0) fish[key] = round2((fish[key] ?? 0) + quantity);
     }
     final fishOrders = _fishOrders.isEmpty
         ? null
@@ -163,19 +438,28 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
     try {
       await _store.mutate(() async {
-        await _store.saveTableState(
-          _key,
-          merged,
-          address: _address.text.trim(),
-        );
-        if (fish.isNotEmpty) {
-          await _store.createTicket(_key, fish, fishOrders: fishOrders);
+        if (items.isEmpty) {
+          await _store.deleteTableState(_key);
+        } else {
+          await _store.saveTableState(
+            _key,
+            items,
+            address: _address.text.trim(),
+            linkedTable: _store.table(_key).linkedTable,
+          );
+          if (fish.isNotEmpty) {
+            await _store.createTicket(_key, fish, fishOrders: fishOrders);
+          }
         }
       });
       if (!mounted) return;
+      final combinedFish = _allFish;
       setState(() {
         _draft.clear();
         _fishOrders.clear();
+        _existingFish = combinedFish;
+        _fishDirty = false;
+        _removed.clear();
       });
       showMessage(
         context,
@@ -192,8 +476,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
   Future<void> _closeTable() async {
     if (_busy) return;
-    final items = _combined;
-    final subtotal = _store.snapshot.money(items);
+    final items = _billItems();
+    final numericItems = _numericItems();
+    final subtotal = _store.snapshot.money(numericItems);
     if (subtotal <= 0) return;
 
     setState(() => _busy = true);
@@ -201,19 +486,16 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     final fee = (subtotal * pct / 100).roundToDouble();
 
     try {
-      final saleItems = <String, dynamic>{...items};
-      if (_fishOrders.isNotEmpty) {
-        saleItems['_fish'] = List<Map<String, dynamic>>.from(_fishOrders);
-      }
       final sale = await _store.createSale({
         'table': _key,
-        'items': saleItems,
+        'items': items,
         'sub': subtotal,
         'pct': pct.round(),
         'fee': fee,
         'total': subtotal + fee,
         'prices': _store.snapshot.prices,
         'address': _address.text.trim(),
+        'linked_table': _store.table(_key).linkedTable,
         'clear_table': true,
       });
       if (!mounted) return;
@@ -230,7 +512,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
   Future<void> _goBack() async {
     final exists = _store.snapshot.tables.containsKey(_key);
-    final empty = _store.table(_key).items.isEmpty && _draft.isEmpty;
+    final empty = _store.table(_key).items.isEmpty &&
+        _draft.isEmpty &&
+        _fishOrders.isEmpty;
     if (isSaboyKey(_key) && exists && empty) {
       try {
         await _store.mutate(() => _store.deleteTableState(_key));
@@ -252,8 +536,13 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         final pct = _store.servicePercentFor(_key);
         final fee = (subtotal * pct / 100).roundToDouble();
         final total = subtotal + fee;
-        final canSend = _newSubtotal > 0 && !_busy;
+        final canSend = (_newSubtotal > 0 ||
+                _fishOrders.isNotEmpty ||
+                _fishDirty ||
+                _removed.isNotEmpty) &&
+            !_busy;
         final canClose = subtotal > 0 && !_busy;
+        final allFish = _allFish;
 
         return Scaffold(
           appBar: AppBar(
@@ -305,6 +594,20 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                     setState(() => _fishPicker = !_fishPicker),
                 onPickFish: (entry) => _askOnion(entry.key, entry.kg),
               ),
+              if (allFish.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Buyurtmadagi baliqlar',
+                  style: TextStyle(
+                    color: palette.tx,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                for (var i = 0; i < allFish.length; i++)
+                  _fishRow(context, i, allFish[i]),
+              ],
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -315,10 +618,6 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Column(
                   children: [
-                    for (final key in fishKeys)
-                      if (key == 'sazan' ||
-                          ((_existing[key] ?? 0) + (_draft[key] ?? 0)) > 0)
-                        _row(context, key),
                     Padding(
                       padding: const EdgeInsets.only(top: 6, bottom: 4),
                       child: Row(
@@ -438,7 +737,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     final def = productByKey(key);
     final existing = _existing[key] ?? 0;
     final draft = _draft[key] ?? 0;
-    final combined = existing + draft;
+    final removed = _removed.contains(key);
+    final effectiveExisting = removed ? 0.0 : existing;
+    final combined = effectiveExisting + draft;
     final price = _store.price(key);
     final unit = def.unit;
 
@@ -464,7 +765,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${money(price)} so\'m / $unit'
-                  '${existing > 0 ? '  ·  buyurtmada: ${quantityText(existing)} $unit' : ''}'
+                  '${effectiveExisting > 0 ? '  ·  buyurtmada: ${quantityText(effectiveExisting)} $unit' : ''}'
+                  '${removed ? '  ·  o‘chirildi' : ''}'
                   '${key == 'tabaka' ? '  ·  qoldiq: ${quantityText(_store.snapshot.stock['tabaka'] ?? 0)} dona' : ''}',
                   style: TextStyle(color: palette.mut, fontSize: 11.5),
                 ),
@@ -474,11 +776,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           const SizedBox(width: 4),
           _StepButton(
             icon: Icons.remove,
-            enabled: draft > 0,
+            enabled: !removed && draft > 0,
             onTap: () => _change(key, -def.step),
           ),
           InkWell(
-            onTap: () => _editQuantity(key),
+            onTap: removed ? null : () => _editQuantity(key),
             borderRadius: BorderRadius.circular(8),
             child: Container(
               width: 48,
@@ -496,9 +798,23 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           ),
           _StepButton(
             icon: Icons.add,
-            enabled: true,
+            enabled: !removed,
             onTap: () => _change(key, def.step),
           ),
+          if (existing > 0)
+            IconButton(
+              icon: Icon(
+                removed ? Icons.undo : Icons.delete_outline,
+                size: 20,
+                color: removed ? palette.pri : palette.bad,
+              ),
+              tooltip: removed ? 'Qaytarish' : 'O‘chirish',
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              onPressed: () =>
+                  removed ? _restoreExisting(key) : _deleteExisting(key),
+            ),
           const SizedBox(width: 6),
           SizedBox(
             width: 72,

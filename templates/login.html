@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0f766e">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="{% static 'images/icon-180.png' %}">
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
 <style>
   body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
   .login-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:32px 26px;box-shadow:0 12px 40px rgba(0,0,0,.12)}
@@ -69,10 +69,7 @@
   <div class="apk-box">
     <div class="apk-title">📱 Mobil ilovani yuklab olish</div>
     <div class="apk-links">
-      <a class="apk-link" href="{% static 'app-release.apk' %}" download>⬇ Barchasi (rol tanlash)</a>
-      <a class="apk-link" href="{% static 'fayz-ofitsiant.apk' %}" download>⬇ Ofitsiant</a>
-      <a class="apk-link" href="{% static 'fayz-oshpaz.apk' %}" download>⬇ Oshpaz</a>
-      <a class="apk-link" href="{% static 'fayz-admin.apk' %}" download>⬇ Admin</a>
+      <a class="apk-link" href="{% static 'app-release.apk' %}" download>⬇ Yuklab olish (bitta APK)</a>
     </div>
     <div class="apk-note">APK o'rnatish uchun telefonda "Noma'lum manbalardan o'rnatish" ruxsatini bering.</div>
   </div>

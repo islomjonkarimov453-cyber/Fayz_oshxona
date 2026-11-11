@@ -1,24 +1,31 @@
 const API='/api/v1';
-const FISH=['sazan','oq','buxarski','ilonbosh'];
-const ITEMS=[['sazan','Sazan','kg',0.5],['oq','Oq baliq','kg',0.5],['buxarski','Buxarski','kg',0.5],['ilonbosh','Ilonbosh','kg',0.5],['non','Non','dona',1],['sous','Sous','dona',1],['fanta','Fanta','dona',1],['cola','Cola','dona',1],['tabaka','Tabaka','dona',1]];
+const FISH=['sazan','oq','buxarski','ilonbosh','amur'];
+const ITEMS=[['sazan','Sazan','kg',0.5],['oq','Oq baliq','kg',0.5],['buxarski','Buxarski','kg',0.5],['ilonbosh','Ilonbosh','kg',0.5],['amur','Amur','kg',0.5],['non','Non','dona',1],['sous','Sous','dona',1],['fanta','Fanta','dona',1],['cola','Cola','dona',1],['tabaka','Tabaka','dona',1]];
 const ROOMS=7;
-const DEF={prices:{sazan:80000,oq:90000,buxarski:100000,ilonbosh:110000,non:3000,sous:5000,fanta:12000,cola:12000,tabaka:45000},tables:{},tickets:[],sales:[],seq:1,service:10,stock:{}};
-let S=norm(JSON.parse(JSON.stringify(DEF))),rev=0,cur=null,draft={},pick=false,mutating=false,fishCat='sazan',pendFish=null,draftFish=[];
+const DEF={prices:{sazan:80000,oq:90000,buxarski:100000,ilonbosh:110000,amur:95000,non:3000,sous:5000,fanta:12000,cola:12000,tabaka:45000},tables:{},tickets:[],sales:[],seq:1,service:10,stock:{}};
+let S=norm(JSON.parse(JSON.stringify(DEF))),rev=0,cur=null,draft={},pick=false,mutating=false,fishCat='sazan',pendFish=null,draftFish=[],curFish=[],fishDirty=false;
 const f=n=>Math.round(n).toLocaleString('ru-RU');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kg=n=>(Math.round(n*100)/100).toString();
+const r2=n=>Math.round(n*100)/100;
+const FISH_SET=new Set(FISH);
+function normFish(x){return {key:x.key,kg:r2(+x.kg||0),onion:x.onion==='sovusli'?'sovusli':'sovussiz',cut:x.cut==='kusok'?'kusok':'butun'}}
+function fishFromItems(items){const src=items||{};const det=((src._fish)||[]).filter(x=>x&&FISH_SET.has(x.key)&&(+x.kg>0)).map(normFish);const covered={};det.forEach(d=>covered[d.key]=r2((covered[d.key]||0)+d.kg));const out=det.slice();FISH.forEach(k=>{const qty=r2(src[k]||0);const rem=r2(qty-(covered[k]||0));if(rem>0.001)out.push({key:k,kg:rem,onion:'sovussiz',cut:'butun',legacy:true})});return out}
+function fishQtyMap(list){const m={};(list||[]).forEach(d=>{if(d&&d.kg>0)m[d.key]=r2((m[d.key]||0)+d.kg)});return m}
+function buildItems(base,draftItems,fish){const items={...(base||{})};delete items._fish;ITEMS.forEach(([k])=>{if(FISH_SET.has(k))return;const v=draftItems[k]||0;if(v!==0){const nv=r2((items[k]||0)+v);if(nv>0)items[k]=nv;else delete items[k]}});const fq=fishQtyMap(fish);FISH.forEach(k=>{if(fq[k]>0)items[k]=fq[k];else delete items[k]});if(fish&&fish.length)items._fish=fish.map(d=>({key:d.key,kg:d.kg,onion:d.onion,cut:d.cut}));return items}
 const _p=location.pathname.replace(/\//g,'');
 const LOCK=['admin','waiter','cook'].includes(_p)?_p:(_p===''?'admin':null);
 const route=()=>LOCK||(['admin','waiter','cook'].includes(location.hash.slice(1))?location.hash.slice(1):'waiter');
 const money=it=>ITEMS.reduce((s,[k])=>s+(it[k]||0)*S.prices[k],0);
 const svc=()=>S.service==null?10:S.service;
 const isS=k=>String(k)[0]==='S';
-const lbl=k=>isS(k)?'Saboy '+String(k).slice(1):'Hona '+k;
+const lblx=(k,link)=>isS(k)?'Saboy '+String(k).slice(1)+(link?' · Hona '+link:''):'Hona '+k;
+const lbl=k=>lblx(k,(S.tables[k]||{}).linked_table||((S.sales.find(s=>s.table===k)||{}).linked_table));
 const pctFor=k=>isS(k)?0:svc();
 const fee=(s,k)=>Math.round(s*pctFor(k)/100);
 const grand=(it,k)=>money(it)+fee(money(it),k);
 const hm=t=>new Date(t).toLocaleTimeString('uz',{hour:'2-digit',minute:'2-digit'});
-function go(r){location.hash=r;cur=null;draft={};draftFish=[];render()}
+function go(r){location.hash=r;cur=null;draft={};draftFish=[];curFish=[];fishDirty=false;render()}
 window.addEventListener('hashchange',render);
 
 function render(){setTimeout(checkRing,0);
@@ -35,37 +42,64 @@ function alerts(){return S.tickets.filter(t=>t.done&&!t.seen).map(t=>`<div class
 function ack(id){return runMutation(()=>api(`/tickets/${id}/seen/`,{method:'POST'}))}
 function waiterMain(){
   if(!cur){
-    let h='<h2 style="margin-top:0">🍽 HONA (hona raqamini tanlang)</h2><div class="grid">';
+    let h='<div style="display:flex;gap:10px;margin-bottom:14px"><button class="btn" style="flex:1" onclick="askSaboyRoom()">🥡 SABOY (olib ketadi)</button></div><h2 style="margin-top:0">🍽 HONA (hona raqamini tanlang)</h2><div class="grid">';
     for(let i=1;i<=ROOMS;i++){
       const t=S.tables[i];
       h+=`<button class="card tbl ${t?'busy':''}" onclick="openT(${i})"><strong>Hona ${i}</strong>${t?'Band · '+f(money(t.items))+' soʻm':'<span style="color:var(--ok)">Boʻsh</span>'}</button>`;
     }
+    Object.keys(S.tables).filter(k=>/^\d+$/.test(k)&&+k>ROOMS).sort((a,b)=>+a-+b).forEach(k=>{
+      const t=S.tables[k];
+      h+=`<button class="card tbl ${t?'busy':''}" onclick="openT('${k}')"><strong>Hona ${k}</strong>${t?'Band · '+f(money(t.items))+' soʻm':'<span style="color:var(--ok)">Boʻsh</span>'}</button>`;
+    });
     h+='</div>';
+    const saboys=Object.keys(S.tables).filter(isS).sort();
+    if(saboys.length){
+      h+='<h2 style="margin-top:18px">🥡 SABOY</h2><div class="grid">';
+      saboys.forEach(k=>{const t=S.tables[k];h+=`<button class="card tbl ${t?'busy':''}" onclick="openT('${k}')"><strong>${lbl(k)}</strong>${t?'Band · '+f(money(t.items))+' soʻm':'<span style="color:var(--ok)">Boʻsh</span>'}</button>`});
+      h+='</div>';
+    }
     return h;
   }
   return orderEditor();
 }
 function orderEditor(){
   const t=S.tables[cur]||{items:{}};
-  const all={};ITEMS.forEach(([k])=>all[k]=(t.items[k]||0)+(draft[k]||0));
+  const fishAll=curFish.concat(draftFish);
+  const all=buildItems(t.items,draft,fishAll);
+  const sub=money(all),feeAmt=fee(sub,cur),total=sub+feeAmt;
+  const newAmt=money(draft)+draftFish.reduce((s,x)=>s+x.kg*(S.prices[x.key]||0),0);
+  const canSend=(Object.values(draft).some(v=>v!==0)||draftFish.length>0||fishDirty)&&!mutating;
+  const canClose=money(all)>0&&!mutating;
   let h=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${lbl(cur)}</h2><button class="btn ghost" onclick="back()">← Orqaga</button></div>`;
   if(isS(cur)){
     h+=`<div style="margin-bottom:15px"><label style="font-weight:bold">📍 Manzil:</label><input type="text" value="${esc(t.address||'')}" onchange="saveSaboAddress('${cur}',this.value)" style="width:100%;padding:8px;margin-top:5px;border:1px solid var(--mut);border-radius:5px"></div>`;
   }
+  h+=`<div style="padding:8px 0"><button class="btn ghost" style="width:100%" onclick="pick=!pick;render()">🐟 Baliq qoʻshish ${pick?'▲':'▼'}</button>${pick?fishPicker():''}</div>`;
+  if(fishAll.length){
+    h+='<div style="margin:4px 0 10px"><b>Buyurtmadagi baliqlar</b>';
+    fishAll.forEach((d,i)=>{
+      const isNew=i>=curFish.length;
+      const label=`${ITEMS.find(x=>x[0]===d.key)?.[1]||d.key} — ${kg(d.kg)} kg · ${d.onion==='sovusli'?'🧅 Sovusli':'Sovussiz'} · ${d.cut==='kusok'?'Kusok':'Butun'}${isNew?' · yangi':''}`;
+      h+=`<div class="row"><div class="n">${label}</div><div class="q">${isNew?`<button class="btn bad" style="padding:4px 10px" onclick="delDraftFish(${i-curFish.length})">✕</button>`:`<button class="btn ghost" style="padding:4px 10px" onclick="editFish(${i})">✎</button><button class="btn bad" style="padding:4px 10px" onclick="delFish(${i})">✕</button>`}</div></div>`;
+    });
+    h+='</div>';
+  }
   ITEMS.forEach(([k,n,u,st])=>{
-    const d=draft[k]||0;if(k==='sazan')h+=`<div style="padding:8px 0"><button class="btn ghost" style="width:100%" onclick="pick=!pick;render()">🐟 Baliq qoʻshish ${pick?'▲':'▼'}</button>${pick?fishPicker():''}</div>`;if(FISH.includes(k)&&!draft[k]&&!t.items[k])return;if(k==='non')h+='<div style="color:var(--mut);font-size:13px;padding-top:12px">Boshqa</div>';
+    if(FISH_SET.has(k))return;
+    const d=draft[k]||0;if(k==='non')h+='<div style="color:var(--mut);font-size:13px;padding-top:12px">Boshqa</div>';
+    const combined=(t.items[k]||0)+d;
+    const del=t.items[k]?`<button class="btn bad" style="width:auto;height:auto;padding:4px 10px" onclick="delItem('${k}')">✕</button>`:'';
     h+=`<div class="row"><div class="n">${n}<small>${f(S.prices[k])} soʻm / ${u}${t.items[k]?' · buyurtmada: '+kg(t.items[k])+' '+u:''}${k==='tabaka'?' · qoldiq: '+kg((S.stock||{}).tabaka||0)+' dona':''}</small></div>
-    <div class="q"><button onclick="chg('${k}',-${st})">−</button><input type="number" inputmode="decimal" min="0" step="${st}" value="${d}" onchange="setD('${k}',this.value)"><button onclick="chg('${k}',${st})">+</button></div>
-    <div class="sum">${f(all[k]*S.prices[k])}</div></div>`;
+    <div class="q"><button onclick="chg('${k}',-${st})">−</button><input type="number" inputmode="decimal" min="0" step="${st}" value="${d}" onchange="setD('${k}',this.value)"><button onclick="chg('${k}',${st})">+</button>${del}</div>
+    <div class="sum">${f(combined*S.prices[k])}</div></div>`;
   });
-  const newAmt=money(draft);
-  h+=`<div style="display:flex;justify-content:space-between;color:var(--mut);padding-top:10px"><span>Taomlar</span><span>${f(money(all))} soʻm</span></div><div style="display:flex;justify-content:space-between;color:var(--mut)"><span>Xizmat haqi (${pctFor(cur)}%)</span><span>${f(fee(money(all),cur))} soʻm</span></div><div class="total"><span>Jami</span><span>${f(grand(all,cur))} soʻm</span></div>
-  <div class="acts"><button class="btn" onclick="send()" ${newAmt?'':'disabled style="opacity:.5"'}>👨‍🍳 Yuborish (baliq → oshpaz)</button>
-  <button class="btn ok" onclick="closeT()" ${money(t.items)||newAmt?'':'disabled style="opacity:.5"'}>🧾 Hisob va chek</button></div></div>`;
+  h+=`<div style="display:flex;justify-content:space-between;color:var(--mut);padding-top:10px"><span>Taomlar</span><span>${f(sub)} soʻm</span></div><div style="display:flex;justify-content:space-between;color:var(--mut)"><span>Xizmat haqi (${pctFor(cur)}%)</span><span>${f(feeAmt)} soʻm</span></div><div class="total"><span>Jami</span><span>${f(total)} soʻm</span></div>
+  <div class="acts"><button class="btn" onclick="send()" ${canSend?'':'disabled style="opacity:.5"'}>👨‍🍳 Yuborish (baliq → oshpaz)</button>
+  <button class="btn ok" onclick="closeT()" ${canClose?'':'disabled style="opacity:.5"'}>🧾 Hisob va chek</button></div></div>`;
   return h;
 }
 function fishPicker(){
-  if(pendFish)return `<div class="card" style="margin-top:8px;border-color:var(--warn)"><b>🐟 ${ITEMS.find(x=>x[0]===pendFish.key)[1]} — ${kg(pendFish.kg)} kg</b><div style="margin:8px 0;color:var(--mut);font-size:13px">Qanday tayyorlaymiz?</div><div class="grid"><button class="btn ok" onclick="confirmOnion('sovusli')">🧅 Sovusli</button><button class="btn" onclick="confirmOnion('sovussiz')">Sovussiz</button></div></div>`;
+  if(pendFish)return `<div class="card" style="margin-top:8px;border-color:var(--warn)"><b>🐟 ${ITEMS.find(x=>x[0]===pendFish.key)[1]} — ${kg(pendFish.kg)} kg</b><div style="margin:8px 0;color:var(--mut);font-size:13px">Qanday tayyorlaymiz?</div><div class="grid"><button class="btn ok" onclick="confirmFish('sovusli','butun')">🧅 Sovusli · Butun</button><button class="btn" onclick="confirmFish('sovusli','kusok')">🧅 Sovusli · Kusok</button><button class="btn" onclick="confirmFish('sovussiz','butun')">Sovussiz · Butun</button><button class="btn" onclick="confirmFish('sovussiz','kusok')">Sovussiz · Kusok</button></div></div>`;
   const list=(S.fishList||[]).filter(e=>e.key===fishCat);
   let h=`<div style="margin-top:8px"><div class="grid" style="grid-template-columns:repeat(4,1fr);gap:6px">${FISH.map(k=>`<button class="btn ${fishCat===k?'':'ghost'}" style="padding:8px 4px;font-size:13px" onclick="fishCat='${k}';render()">${ITEMS.find(x=>x[0]===k)[1]}</button>`).join('')}</div>`;
   if(!list.length)h+='<div style="color:var(--mut);font-size:12px;margin-top:8px">Bu turdagi baliq hali kiritilmagan</div>';
@@ -73,51 +107,76 @@ function fishPicker(){
   return h+'</div>';
 }
 function pickFish(id){const e=(S.fishList||[]).find(x=>x.id===id);if(e){pendFish={key:e.key,kg:e.kg};render()}}
-function confirmOnion(onion){
+function confirmFish(onion,cut){
   if(!pendFish)return;
   const {key,kg:w}=pendFish;
-  draft[key]=Math.round(((draft[key]||0)+w)*100)/100;
-  draftFish.push({key,kg:w,onion});
+  draftFish.push({key,kg:w,onion,cut});
   pendFish=null;pick=false;render();
 }
-function openT(i){cur=i;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];render()}
+function editFish(i){
+  const d=curFish[i];if(!d)return;
+  document.getElementById('modal').innerHTML=`<div class="modal"><div><h3>🐟 Baliqni tahrirlash</h3><div class="pr"><div><label>Ogʻirligi (kg)</label><input id="fe_kg" type="number" inputmode="decimal" step="0.1" min="0" value="${kg(d.kg)}"></div><div><label>Piyoz</label><select id="fe_onion"><option value="sovusli" ${d.onion==='sovusli'?'selected':''}>🧅 Sovusli</option><option value="sovussiz" ${d.onion!=='sovusli'?'selected':''}>Sovussiz</option></select></div><div><label>Shakli</label><select id="fe_cut"><option value="butun" ${d.cut!=='kusok'?'selected':''}>Butun</option><option value="kusok" ${d.cut==='kusok'?'selected':''}>Kusok</option></select></div></div><div class="acts" style="margin-top:12px"><button class="btn" onclick="saveFishEdit(${i})">Saqlash</button><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Bekor qilish</button></div></div></div>`;
+}
+function saveFishEdit(i){
+  const kgv=parseFloat(String(document.getElementById('fe_kg').value).replace(',','.'));
+  if(!kgv||kgv<=0){alert('Ogʻirlikni toʻgʻri kiriting');return}
+  curFish[i]={...curFish[i],kg:r2(kgv),onion:document.getElementById('fe_onion').value,cut:document.getElementById('fe_cut').value};
+  fishDirty=true;document.getElementById('modal').innerHTML='';render();
+}
+function delFish(i){if(!confirm('Bu baliqni buyurtmadan oʻchirasizmi?'))return;curFish.splice(i,1);fishDirty=true;render()}
+function delDraftFish(i){draftFish.splice(i,1);render()}
+function delItem(k){
+  const t=S.tables[cur]||{items:{}};
+  const qty=t.items[k]||0;
+  if(!qty)return;
+  if(!confirm('Buyurtmadagi bu mahsulotni o‘chirasizmi?'))return;
+  draft[k]=r2((draft[k]||0)-qty);
+  render();
+}
+function openT(i){cur=i;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];curFish=fishFromItems((S.tables[i]||{}).items);fishDirty=false;render()}
 function chg(k,d){draft[k]=Math.max(0,Math.round(((draft[k]||0)+d)*100)/100);render()}
 function setD(k,v){draft[k]=Math.max(0,parseFloat(v)||0);render()}
 async function send(){
-  if(!money(draft)||mutating)return;
-  const d={...draft},tb=String(cur);
+  if((!Object.values(draft).some(v=>v!==0)&&!draftFish.length&&!fishDirty)||mutating)return;
+  const tb=String(cur);
   mutating=true;
   try{
     const t=S.tables[tb]||{items:{}};
-    const items={...(t.items||{})};
-    ITEMS.forEach(([k])=>{if(d[k])items[k]=Math.round(((items[k]||0)+d[k])*100)/100});
-    const body={items,address:t.address||'',saboy:!!t.saboy};
-    if(S.tables[tb])await api(`/table-states/${encodeURIComponent(tb)}/`,{method:'PATCH',body:JSON.stringify(body)});
-    else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:tb,...body})});
-    const fi={};FISH.forEach(k=>{if(d[k]>0)fi[k]=d[k]});
-    if(draftFish.length)fi._fish=draftFish.map(x=>({key:x.key,kg:x.kg,onion:x.onion}));
-    if(Object.keys(fi).some(k=>k!=='_fish'))await api('/tickets/',{method:'POST',body:JSON.stringify({table:tb,items:fi})});
-    draft={};draftFish=[];
+    const fishAll=curFish.concat(draftFish);
+    const items=buildItems(t.items,draft,fishAll);
+    const empty=!money(items)&&!(items._fish&&items._fish.length);
+    if(empty){
+      if(S.tables[tb])await api(`/table-states/${encodeURIComponent(tb)}/`,{method:'DELETE'});
+    }else{
+      const body={items,address:t.address||'',saboy:!!t.saboy,linked_table:t.linked_table||''};
+      if(S.tables[tb])await api(`/table-states/${encodeURIComponent(tb)}/`,{method:'PATCH',body:JSON.stringify(body)});
+      else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:tb,...body})});
+    }
+    if(draftFish.length){
+      const fi=fishQtyMap(draftFish);
+      fi._fish=draftFish.map(x=>({key:x.key,kg:x.kg,onion:x.onion,cut:x.cut}));
+      await api('/tickets/',{method:'POST',body:JSON.stringify({table:tb,items:fi})});
+    }
+    draft={};draftFish=[];fishDirty=false;curFish=fishFromItems(items);
     await sync();
     return true;
   }catch(e){showError(e);return false}finally{mutating=false}
 }
 async function closeT(){
   if(mutating)return;
-  const d={...draft},tb=String(cur);
-  const items={...((S.tables[tb]||{}).items||{})};
-  ITEMS.forEach(([k])=>{if(d[k])items[k]=Math.round(((items[k]||0)+d[k])*100)/100});
-  if(draftFish.length)items._fish=draftFish.map(x=>({key:x.key,kg:x.kg,onion:x.onion}));
+  const tb=String(cur);
+  const t=S.tables[tb]||{items:{}};
+  const items=buildItems(t.items,draft,curFish.concat(draftFish));
   if(!money(items))return;
   const sub=money(items),pct=pctFor(tb),feeAmt=fee(sub,tb);
   const sale={
     table:tb,items,sub,pct,fee:feeAmt,total:sub+feeAmt,
-    prices:{...S.prices},address:(S.tables[tb]||{}).address||'',clear_table:true
+    prices:{...S.prices},address:t.address||'',linked_table:t.linked_table||'',clear_table:true
   };
   mutating=true;
   try{
     const data=await api('/sales/',{method:'POST',body:JSON.stringify(sale)});
-    cur=null;draft={};draftFish=[];
+    cur=null;draft={};draftFish=[];curFish=[];fishDirty=false;
     await sync();
     if(data&&data.table)receipt(data);
   }catch(e){showError(e)}finally{mutating=false}
@@ -126,7 +185,7 @@ function receipt(s){
   const lines=ITEMS.filter(([k])=>s.items[k]).map(([k,n,u])=>`<div class="l"><span>${n} ${kg(s.items[k])} ${u}</span><span>${f(s.items[k]*s.prices[k])}</span></div>`).join('');
   const address=s.address||S.tables[s.table]?.address||'';
   document.getElementById('modal').innerHTML=`<div class="modal"><div><div class="rc"><div style="text-align:center"><b>FAYZ BALIQXONASI</b><br>Chek №${s.id}</div><hr>
-  <div>${lbl(s.table)}${address?`<br>📍 ${esc(address)}`:''}<br>${new Date(s.time).toLocaleString('uz')}</div><hr>${lines}<hr>
+  <div>${lblx(s.table,s.linked_table||(S.tables[s.table]||{}).linked_table)}${address?`<br>📍 ${esc(address)}`:''}<br>${new Date(s.time).toLocaleString('uz')}</div><hr>${lines}<hr>
   <div class="l"><span>Taomlar</span><span>${f(s.sub??s.total)}</span></div>${s.pct>0?`<div class="l"><span>Xizmat (${s.pct}%)</span><span>${f(s.fee||0)}</span></div>`:''}<div class="l"><b>JAMI:</b><b>${f(s.total)} soʻm</b></div><hr><div style="text-align:center">Rahmat! Yana kutamiz 🐟</div></div>
   <div class="acts" style="margin-top:10px"><button class="btn" onclick="window.print()">🖨 Chop etish</button><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Yopish</button></div></div></div>`;
 }
@@ -134,7 +193,7 @@ function receipt(s){
 /* ---------- OSHPAZ ---------- */
 function ticketLines(t){
   const det=(t.items&&t.items._fish)||[];
-  if(det.length)return det.map(x=>`<li><b>${ITEMS.find(i=>i[0]===x.key)?.[1]||x.key}</b> — ${kg(x.kg)} kg · ${x.onion==='sovusli'?'🧅 Sovusli':'Sovussiz'}</li>`).join('');
+  if(det.length)return det.map(x=>`<li><b>${ITEMS.find(i=>i[0]===x.key)?.[1]||x.key}</b> — ${kg(x.kg)} kg · ${x.onion==='sovusli'?'🧅 Sovusli':'Sovussiz'} · ${x.cut==='kusok'?'Kusok':'Butun'}</li>`).join('');
   return ITEMS.filter(([k])=>t.items[k]).map(([k,n,u])=>`<li><b>${n}</b> — ${kg(t.items[k])} ${u}</li>`).join('');
 }
 function cook(){
@@ -164,7 +223,7 @@ function checkRing(){
   if(!need&&ringT){clearInterval(ringT);ringT=null}
 }
 function accept(id){return runMutation(()=>api(`/tickets/${id}/accept/`,{method:'POST'}))}
-async function newSaboy(){
+async function newSaboy(linked=''){
   if(mutating)return;
   mutating=true;
   try{
@@ -172,13 +231,22 @@ async function newSaboy(){
     const next=(settings.seqS||0)+1;
     await api('/settings/',{method:'PATCH',body:JSON.stringify({seqS:next})});
     const key='S'+next;
-    await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:key,items:{},saboy:true})});
-    cur=key;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];
+    await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:key,items:{},saboy:true,linked_table:linked||''})});
+    cur=key;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];curFish=[];fishDirty=false;
     await sync();
   }catch(e){showError(e)}finally{mutating=false}
 }
+function askSaboyRoom(){
+  const rooms=[];
+  for(let i=1;i<=ROOMS;i++)rooms.push(String(i));
+  Object.keys(S.tables).forEach(k=>{if(/^\d+$/.test(k)&&+k>ROOMS&&!rooms.includes(k))rooms.push(k)});
+  rooms.sort((a,b)=>+a-+b);
+  const busy=k=>S.tables[k]&&money(S.tables[k].items)>0;
+  document.getElementById('modal').innerHTML=`<div class="modal"><div><h3>🥡 Qaysi hona uchun saboy?</h3><div class="grid">${rooms.map(k=>`<button class="btn ${busy(k)?'':'ghost'}" onclick="pickSaboyRoom('${k}')">Hona ${k}${busy(k)?' · band':''}</button>`).join('')}</div><div class="acts" style="margin-top:12px"><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Bekor qilish</button></div></div></div>`;
+}
+function pickSaboyRoom(k){document.getElementById('modal').innerHTML='';return newSaboy(k)}
 function back(){
-  const k=cur;cur=null;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];render();
+  const k=cur;cur=null;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];curFish=[];fishDirty=false;render();
   if(isS(k)&&S.tables[k]&&!money(S.tables[k].items)){
     runMutation(()=>api(`/table-states/${encodeURIComponent(k)}/`,{method:'DELETE'}));
   }
@@ -194,7 +262,7 @@ const pr=(x,k)=>(x.prices||S.prices)[k]||0;
 const nm=k=>ITEMS.find(i=>i[0]===k)[1];
 function salesTable(list){
   const fi=x=>FISH.filter(k=>x.items[k]).map(k=>nm(k)+' '+kg(x.items[k])+' kg').join(', ')||'—';
-  return `<div class="card scroll"><table class="tt"><thead><tr><th>№</th><th>Vaqt</th><th>Hona</th><th>Baliq</th><th>Non</th><th>Sous</th><th>Fanta</th><th>Cola</th><th>Tabaka</th><th class="num">Xizmat</th><th class="num">Jami</th><th></th></tr></thead><tbody>${list.map(x=>`<tr><td>${x.id}</td><td>${new Date(x.time).toLocaleString('uz',{dateStyle:'short',timeStyle:'short'})}</td><td>${lbl(x.table)}</td><td>${fi(x)}</td><td>${x.items.non||0}</td><td>${x.items.sous||0}</td><td>${x.items.fanta||0}</td><td>${x.items.cola||0}</td><td>${x.items.tabaka||0}</td><td class="num">${f(x.fee||0)}</td><td class="num"><b>${f(x.total)}</b></td><td><button class="btn ghost" style="padding:4px 10px;font-size:13px" onclick="reprint(${x.id})">Chek</button></td></tr>`).join('')||'<tr><td colspan="12" style="color:var(--mut)">Sotuv yoʻq</td></tr>'}</tbody></table></div>`;
+  return `<div class="card scroll"><table class="tt"><thead><tr><th>№</th><th>Vaqt</th><th>Hona</th><th>Baliq</th><th>Non</th><th>Sous</th><th>Fanta</th><th>Cola</th><th>Tabaka</th><th class="num">Xizmat</th><th class="num">Jami</th><th></th></tr></thead><tbody>${list.map(x=>`<tr><td>${x.id}</td><td>${new Date(x.time).toLocaleString('uz',{dateStyle:'short',timeStyle:'short'})}</td><td>${lblx(x.table,x.linked_table)}</td><td>${fi(x)}</td><td>${x.items.non||0}</td><td>${x.items.sous||0}</td><td>${x.items.fanta||0}</td><td>${x.items.cola||0}</td><td>${x.items.tabaka||0}</td><td class="num">${f(x.fee||0)}</td><td class="num"><b>${f(x.total)}</b></td><td><button class="btn ghost" style="padding:4px 10px;font-size:13px" onclick="reprint(${x.id})">Chek</button> <button class="btn" style="padding:4px 10px;font-size:13px" onclick="reopenSale(${x.id})">Ochish</button></td></tr>`).join('')||'<tr><td colspan="12" style="color:var(--mut)">Sotuv yoʻq</td></tr>'}</tbody></table></div>`;
 }
 function admin(){
   const t0=new Date().setHours(0,0,0,0),from=aper==='today'?t0:aper==='week'?t0-6*864e5:0;
@@ -227,7 +295,7 @@ function admin(){
   }else if(atab==='sales'){
     b=salesTable(sl.slice().reverse());
   }else{
-    b=`<h2 style="margin-top:0">🐟 Baliq narxlari (1 kg)</h2><div class="pr">${FISH.map(inp).join('')}</div><h2>🥤 Non va ichimliklar (1 dona)</h2><div class="pr">${OTH.map(inp).join('')}</div><h2>📦 Qoldiq</h2><div class="card"><p style="color:var(--mut);font-size:13px;margin-top:0">Tabaka — nechta dona qoldigʻi bor. Sotilganda avtomatik kamayadi.</p><div class="pr"><div><label>Tabaka qoldigʻi (dona)</label><input type="number" min="0" step="1" value="${(S.stock||{}).tabaka||0}" onchange="setStock('tabaka',this.value)"></div></div></div><h2>Xizmat haqi</h2><div class="pr"><div><label>Foiz (%)</label><input type="number" min="0" max="100" value="${svc()}" onchange="setSvc(this.value)"></div></div><h2>Xavfli boʻlim</h2><button class="btn bad" onclick="resetAll()">Barcha sotuvlarni tozalash</button>`;
+    b=`<h2 style="margin-top:0">🐟 Baliq narxlari (1 kg)</h2><div class="pr">${FISH.map(inp).join('')}</div><h2>🥤 Non va ichimliklar (1 dona)</h2><div class="pr">${OTH.map(inp).join('')}</div><h2>📦 Qoldiq</h2><div class="card"><p style="color:var(--mut);font-size:13px;margin-top:0">Tabaka — nechta dona qoldigʻi bor. Sotilganda avtomatik kamayadi.</p><div class="pr"><div><label>Tabaka qoldigʻi (dona)</label><input type="number" min="0" step="1" value="${(S.stock||{}).tabaka||0}" onchange="setStock('tabaka',this.value)"></div></div></div><h2>Xizmat haqi</h2><div class="pr"><div><label>Foiz (%)</label><input type="number" min="0" max="100" value="${svc()}" onchange="setSvc(this.value)"></div></div><h2>Xavfli boʻlim</h2><button class="btn bad" onclick="resetAll()">Barcha sotuvlarni tozalash</button><div style="height:10px"></div><button class="btn bad" onclick="clearSales()">Faqat barcha cheklarni o‘chirish</button>`;
   }
   return `<div class="adm"><aside class="side">${tabs.map(([k,t])=>`<button class="${atab===k?'on':''}" onclick="setTab('${k}')">${t}</button>`).join('')}</aside><section>${atab==='set'?'':`<div class="per">${pers.map(([k,t])=>`<button class="${aper===k?'on':''}" onclick="setPer('${k}')">${t}</button>`).join('')}</div>`}${b}</section></div>`;
 }
@@ -245,7 +313,15 @@ function setP(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>a
 function setStock(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({stock:{[k]:n}})}))}
 function resetAll(){
   if(!confirm('Hamma sotuvlar va buyurtmalar oʻchiriladi. Davom etasizmi?'))return;
-  return runMutation(async()=>{await api('/settings/reset/',{method:'POST'});cur=null;draft={};draftFish=[]});
+  return runMutation(async()=>{await api('/settings/reset/',{method:'POST'});cur=null;draft={};draftFish=[];curFish=[];fishDirty=false});
+}
+function reopenSale(id){
+  if(!confirm('Bu chek qayta ochilsinmi? Stol holati tiklanadi.'))return;
+  return runMutation(()=>api(`/sales/${id}/reopen/`,{method:'POST'}));
+}
+function clearSales(){
+  if(!confirm('Barcha cheklar oʻchiriladi. Davom etasizmi?'))return;
+  return runMutation(()=>api('/sales/clear/',{method:'DELETE'}));
 }
 
 /* ---------- SERVER BILAN ALOQA ---------- */

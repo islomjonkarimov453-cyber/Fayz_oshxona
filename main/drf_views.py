@@ -34,6 +34,7 @@ from .state import (
     FISH_KEYS,
     OTHER_KEYS,
     PRODUCT_LABELS,
+    STOCK_KEYS,
     bump_revision,
     consume_fish_list,
     consume_stock,
@@ -220,6 +221,59 @@ class SaleViewSet(RevisionMixin, viewsets.ModelViewSet):
         if end:
             queryset = queryset.filter(time__lte=end)
         return queryset
+
+    @action(detail=True, methods=['post'])
+    def reopen(self, request, pk=None):
+        sale = self.get_object()
+        items = dict(sale.items or {})
+        table_key = sale.table_key
+        with transaction.atomic():
+            table_state, _ = TableState.objects.update_or_create(
+                table_key=table_key,
+                defaults={
+                    'items': items,
+                    'address': sale.address or '',
+                    'saboy': str(table_key).startswith('S'),
+                    'linked_table': sale.linked_table or None,
+                },
+            )
+            if table_key.isdigit():
+                Table.objects.filter(number=int(table_key)).update(is_busy=True)
+            app_state = AppState.get_state()
+            stock = dict(app_state.stock or {})
+            changed = False
+            for key in STOCK_KEYS:
+                try:
+                    qty = float((items or {}).get(key) or 0)
+                except (TypeError, ValueError):
+                    qty = 0
+                if qty > 0:
+                    try:
+                        current = float(stock.get(key) or 0)
+                    except (TypeError, ValueError):
+                        current = 0
+                    stock[key] = int(current + qty) if (current + qty) == int(current + qty) else current + qty
+                    changed = True
+            if changed:
+                app_state.stock = stock
+                app_state.save(update_fields=['stock'])
+            sale.delete()
+        bump_revision()
+        return Response({
+            'table_state': {
+                'table_key': table_state.table_key,
+                'items': table_state.items,
+                'address': table_state.address or '',
+                'saboy': table_state.saboy,
+                'linked_table': table_state.linked_table or '',
+            }
+        })
+
+    @action(detail=False, methods=['delete'])
+    def clear(self, request):
+        Sale.objects.all().delete()
+        bump_revision()
+        return Response({'deleted': True})
 
 
 class TableStateViewSet(RevisionMixin, viewsets.ModelViewSet):

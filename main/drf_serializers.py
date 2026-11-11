@@ -159,11 +159,12 @@ def _recalculate_order_total(order):
 class TableStateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TableState
-        fields = ['table_key', 'items', 'address', 'saboy']
+        fields = ['table_key', 'items', 'address', 'saboy', 'linked_table']
         extra_kwargs = {
             'items': {'required': False},
             'address': {'required': False, 'allow_blank': True, 'allow_null': True},
             'saboy': {'required': False},
+            'linked_table': {'required': False, 'allow_blank': True, 'allow_null': True},
         }
 
     def validate_items(self, value):
@@ -235,7 +236,7 @@ class SaleSerializer(serializers.ModelSerializer):
         model = Sale
         fields = [
             'id', 'time', 'table', 'items', 'sub', 'pct', 'fee', 'total',
-            'address', 'prices', 'clear_table',
+            'address', 'prices', 'linked_table', 'clear_table',
         ]
         extra_kwargs = {
             'time': {'required': False},
@@ -244,6 +245,7 @@ class SaleSerializer(serializers.ModelSerializer):
             'fee': {'required': False},
             'total': {'required': False},
             'address': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'linked_table': {'required': False, 'allow_blank': True, 'allow_null': True},
         }
 
     def validate_id(self, value):

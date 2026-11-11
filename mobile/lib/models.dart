@@ -40,17 +40,34 @@ class TableData {
     required this.items,
     this.address = '',
     this.saboy = false,
+    this.linkedTable = '',
+    this.fishOrders = const [],
   });
 
   final Map<String, double> items;
   final String address;
   final bool saboy;
+  final String linkedTable;
+  final List<FishOrder> fishOrders;
 
-  factory TableData.fromJson(Map<String, dynamic> json) => TableData(
-        items: itemsFrom(json['items']),
-        address: (json['address'] ?? '').toString(),
-        saboy: asBool(json['saboy']),
-      );
+  factory TableData.fromJson(Map<String, dynamic> json) {
+    final fishOrders = <FishOrder>[];
+    final rawItems = json['items'];
+    if (rawItems is Map && rawItems['_fish'] is List) {
+      for (final entry in rawItems['_fish'] as List) {
+        if (entry is Map) {
+          fishOrders.add(FishOrder.fromJson(Map<String, dynamic>.from(entry)));
+        }
+      }
+    }
+    return TableData(
+      items: itemsFrom(json['items']),
+      address: (json['address'] ?? '').toString(),
+      saboy: asBool(json['saboy']),
+      linkedTable: (json['linked_table'] ?? json['linkedTable'] ?? '').toString(),
+      fishOrders: fishOrders,
+    );
+  }
 }
 
 /// Admin tomonidan kiritilgan baliq og'irligi (kg).
@@ -70,19 +87,27 @@ class FishStock {
 
 /// Oshpazga boradigan baliq tafsiloti: turi, og'irligi va piyoz turi.
 class FishOrder {
-  const FishOrder({required this.key, required this.kg, required this.onion});
+  const FishOrder({
+    required this.key,
+    required this.kg,
+    required this.onion,
+    this.cut = 'butun',
+  });
 
   final String key;
   final double kg;
   final String onion;
+  final String cut;
 
   factory FishOrder.fromJson(Map<String, dynamic> json) => FishOrder(
         key: (json['key'] ?? '').toString(),
         kg: asDouble(json['kg']),
         onion: (json['onion'] ?? '').toString(),
+        cut: (json['cut'] ?? 'butun').toString(),
       );
 
   String get onionLabel => onion == 'sovusli' ? 'Sovusli' : 'Sovussiz';
+  String get cutLabel => cut == 'kusok' ? 'Kusok' : 'Butun';
 }
 
 class Ticket {
@@ -146,6 +171,7 @@ class Sale {
     required this.total,
     required this.address,
     required this.prices,
+    this.linkedTable = '',
   });
 
   final int id;
@@ -158,6 +184,7 @@ class Sale {
   final double total;
   final String address;
   final Map<String, double> prices;
+  final String linkedTable;
 
   factory Sale.fromJson(Map<String, dynamic> json) => Sale(
         id: asInt(json['id']),
@@ -170,6 +197,7 @@ class Sale {
         total: asDouble(json['total']),
         address: (json['address'] ?? '').toString(),
         prices: itemsFrom(json['prices']),
+        linkedTable: (json['linked_table'] ?? json['linkedTable'] ?? '').toString(),
       );
 }
 

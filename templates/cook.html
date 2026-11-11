@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Baliqxona">
     <link rel="apple-touch-icon" href="{% static 'images/icon-180.png' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
 </head>
 <body>
     <header>
@@ -24,7 +24,7 @@
     </header>
     <main id="app"></main>
     <div id="modal"></div>
-    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/app.js' %}?v=3"></script>
     <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {

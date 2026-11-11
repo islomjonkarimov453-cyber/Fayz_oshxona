@@ -36,9 +36,7 @@ class AppStore extends ChangeNotifier {
 
   String defaultBaseUrl() {
     if (kIsWeb) return Uri.base.origin;
-    return isAndroid
-        ? 'https://fayz-baliqhona.uz'
-        : 'http://127.0.0.1:8000';
+    return 'https://fayz-baliqhona.uz';
   }
 
   Future<void> init() async {
@@ -217,14 +215,16 @@ class AppStore extends ChangeNotifier {
 
   Future<void> saveTableState(
     String tableKey,
-    Map<String, double> items, {
+    Map<String, dynamic> items, {
     String address = '',
     bool? saboy,
+    String? linkedTable,
   }) async {
     final payload = <String, dynamic>{
       'items': items,
       'address': address,
       'saboy': saboy ?? isSaboyKey(tableKey),
+      if (linkedTable != null) 'linked_table': linkedTable,
     };
     if (snapshot.tables.containsKey(tableKey)) {
       await _api.patch(
@@ -298,7 +298,7 @@ class AppStore extends ChangeNotifier {
     return sale;
   }
 
-  Future<String> createSaboy() async {
+  Future<String> createSaboy({String linkedTable = ''}) async {
     var key = '';
     await mutate(() async {
       final data = await _api.get('/settings/');
@@ -308,9 +308,10 @@ class AppStore extends ChangeNotifier {
       key = 'S$next';
       await _api.post('/table-states/', {
         'table_key': key,
-        'items': <String, double>{},
+        'items': <String, dynamic>{},
         'saboy': true,
         'address': '',
+        'linked_table': linkedTable,
       });
     });
     return key;
@@ -333,5 +334,13 @@ class AppStore extends ChangeNotifier {
 
   Future<void> resetAll() async {
     await _api.post('/settings/reset/');
+  }
+
+  Future<void> reopenSale(Sale sale) async {
+    await _api.post('/sales/${sale.id}/reopen/');
+  }
+
+  Future<void> clearSales() async {
+    await _api.delete('/sales/clear/');
   }
 }

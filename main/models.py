@@ -87,6 +87,7 @@ class TableState(models.Model):
     items = models.JSONField(default=dict)
     address = models.TextField(blank=True, null=True)
     saboy = models.BooleanField(default=False)
+    linked_table = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f'TableState: {self.table_key}'
@@ -97,6 +98,8 @@ class TableState(models.Model):
             result['address'] = self.address
         if self.saboy:
             result['saboy'] = True
+        if self.linked_table:
+            result['linked_table'] = self.linked_table
         return result
 
 
@@ -139,6 +142,7 @@ class Sale(models.Model):
     total = models.DecimalField(max_digits=12, decimal_places=2)
     address = models.TextField(blank=True, null=True)
     prices = models.JSONField(default=dict)
+    linked_table = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f'Sale #{self.id} - {self.table_key}'
@@ -157,5 +161,7 @@ class Sale(models.Model):
         }
         if self.address:
             result['address'] = self.address
+        if self.linked_table:
+            result['linked_table'] = self.linked_table
         return result
 

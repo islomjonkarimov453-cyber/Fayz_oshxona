@@ -50,6 +50,33 @@ class _AdminScreenState extends State<AdminScreen> {
   List<Sale> get _sales =>
       _store.snapshot.sales.where((sale) => sale.time >= _from).toList();
 
+  Future<void> _reopenSale(Sale sale) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Chekni qayta ochish'),
+        content: const Text('Stol holati tiklanadi. Davom etasizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Ochish'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await runMutation(
+      context,
+      _store,
+      () => _store.reopenSale(sale),
+      successText: 'Chek qayta ochildi',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
@@ -298,6 +325,7 @@ class _AdminScreenState extends State<AdminScreen> {
               sale: sale,
               onTap: () =>
                   showReceipt(context, sale, _store.snapshot),
+              onReopen: () => _reopenSale(sale),
             ),
           ),
         ),
@@ -535,6 +563,7 @@ class _AdminScreenState extends State<AdminScreen> {
             child: _SaleTile(
               sale: sale,
               onTap: () => showReceipt(context, sale, _store.snapshot),
+              onReopen: () => _reopenSale(sale),
             ),
           ),
         ),
@@ -546,10 +575,15 @@ class _AdminScreenState extends State<AdminScreen> {
 }
 
 class _SaleTile extends StatelessWidget {
-  const _SaleTile({required this.sale, required this.onTap});
+  const _SaleTile({
+    required this.sale,
+    required this.onTap,
+    required this.onReopen,
+  });
 
   final Sale sale;
   final VoidCallback onTap;
+  final VoidCallback onReopen;
 
   @override
   Widget build(BuildContext context) {
@@ -591,7 +625,7 @@ class _SaleTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '№${sale.id} · ${tableLabel(sale.table)}',
+                            '№${sale.id} · ${tableLabel(sale.table)}${sale.linkedTable.isNotEmpty ? ' · Hona ${sale.linkedTable}' : ''}',
                             style: TextStyle(
                               color: palette.tx,
                               fontWeight: FontWeight.w700,
@@ -623,13 +657,30 @@ class _SaleTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                '${money(sale.total)}',
-                style: TextStyle(
-                  color: palette.tx,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    money(sale.total),
+                    style: TextStyle(
+                      color: palette.tx,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onReopen,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 28),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Ochish',
+                      style: TextStyle(color: palette.pri, fontSize: 11),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -835,6 +886,35 @@ class _SettingsTabState extends State<_SettingsTab> {
       widget.store,
       () => widget.store.resetAll(),
       successText: 'Hamma ma\'lumot tozalandi',
+    );
+  }
+
+  Future<void> _clearSales() async {
+    final palette = AppPalette.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Barcha cheklar'),
+        content: const Text('Faqat sotuvlar/cheklar o\'chiriladi. Davom etasizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: palette.bad),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('O\'chirish'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await runMutation(
+      context,
+      widget.store,
+      () => widget.store.clearSales(),
+      successText: 'Barcha cheklar o\'chirildi',
     );
   }
 
@@ -1063,6 +1143,19 @@ class _SettingsTabState extends State<_SettingsTab> {
           icon: Icon(Icons.delete_forever, size: 19, color: palette.bad),
           label: Text(
             'Barcha sotuvlarni tozalash',
+            style: TextStyle(color: palette.bad),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: palette.bad.withValues(alpha: 0.5)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: widget.store.mutating ? null : _clearSales,
+          icon: Icon(Icons.receipt_long, size: 19, color: palette.bad),
+          label: Text(
+            'Faqat barcha cheklarni o\'chirish',
             style: TextStyle(color: palette.bad),
           ),
           style: OutlinedButton.styleFrom(

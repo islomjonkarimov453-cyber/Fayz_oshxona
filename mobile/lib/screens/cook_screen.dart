@@ -274,7 +274,7 @@ class _TicketCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${quantityText(order.kg)} kg · ${order.onionLabel}',
+                        '${quantityText(order.kg)} kg · ${order.onionLabel} · ${order.cutLabel}',
                         style: TextStyle(
                           color: palette.tx,
                           fontSize: 15,
