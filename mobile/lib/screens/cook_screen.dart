@@ -21,6 +21,8 @@ class CookScreen extends StatefulWidget {
 class _CookScreenState extends State<CookScreen> with WidgetsBindingObserver {
   bool _alarmOn = false;
   bool _inBackground = false;
+  bool _initialized = false;
+  Set<int> _lastPending = {};
 
   AppStore get _store => widget.store;
 
@@ -71,6 +73,15 @@ class _CookScreenState extends State<CookScreen> with WidgetsBindingObserver {
   }
 
   void _onStoreChanged() {
+    final current = _currentPending;
+    if (_initialized) {
+      final added = current.difference(_lastPending);
+      if (added.isNotEmpty && mounted) {
+        showMessage(context, 'Yangi zakaz!');
+      }
+    }
+    _lastPending = current;
+    _initialized = true;
     _syncAlarm();
   }
 

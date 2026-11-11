@@ -145,7 +145,7 @@ def save_state_to_db(state, app_state, rev):
     app_state.fish_list = state.get('fishList') or state.get('fish_list') or []
     app_state.stock = state.get('stock') or {}
     app_state._rev = rev
-    app_state.save()
+    app_state.save(update_fields=['prices', 'service', 'seq', 'seq_s', 'fish_list', 'stock', '_rev'])
 
     tables_data = state.get('tables') or {}
     existing_tables = {item.table_key: item for item in TableState.objects.select_for_update()}

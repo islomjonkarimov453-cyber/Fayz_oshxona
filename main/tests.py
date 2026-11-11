@@ -1,6 +1,7 @@
 import json
 
 from django.test import Client, TestCase
+from django.utils import timezone
 
 from .models import AppState, Sale, TableState, Ticket
 
@@ -9,10 +10,12 @@ PRICES = {
     'oq': 90000,
     'buxarski': 100000,
     'ilonbosh': 110000,
+    'amur': 95000,
     'non': 3000,
     'sous': 5000,
     'fanta': 12000,
     'cola': 12000,
+    'tabaka': 45000,
 }
 
 
@@ -133,7 +136,7 @@ class ApiStateTests(TestCase):
         state = make_state(
             sales=[{
                 'id': 1,
-                'time': 3000,
+                'time': int(timezone.now().timestamp() * 1000),
                 'table': 'S1',
                 'items': {'sazan': 1},
                 'sub': 80000,

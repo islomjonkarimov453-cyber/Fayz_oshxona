@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/events', api.api_events, name='api_events'),
     path('api/events/', api.api_events, name='api_events_slash'),
     path('api/we wish/', api.health, name='health'),
+    path('api/health/', api.health, name='health_alias'),
 
     path('api/categories/', api.category_list, name='category_list'),
     path('api/categories/<int:pk>/', api.category_detail, name='category_detail'),
@@ -59,5 +60,8 @@ urlpatterns = [
     path('api/settings/reset/', api.settings_reset, name='settings_reset'),
 
     path('api/stats/summary/', api.stats_summary, name='stats_summary'),
+    path('api/stats/fish/', api.stats_fish, name='stats_fish'),
+    path('api/stats/other/', api.stats_other, name='stats_other'),
+    path('api/legacy/cook-orders/', api.legacy_cook_orders, name='legacy_cook_orders'),
     path('api/legacy/admin-orders/', api.legacy_admin_orders, name='legacy_admin_orders'),
 ]
