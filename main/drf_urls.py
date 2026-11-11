@@ -15,6 +15,7 @@ router.register('table-states', drf_views.TableStateViewSet, basename='table-sta
 urlpatterns = [
     path('settings/', drf_views.SettingsAPIView.as_view(), name='v1_settings'),
     path('settings/reset/', drf_views.SettingsResetAPIView.as_view(), name='v1_settings_reset'),
+    path('settings/close-day/', drf_views.CloseDayAPIView.as_view(), name='v1_settings_close_day'),
     path('stats/summary/', drf_views.StatsSummaryAPIView.as_view(), name='v1_stats_summary'),
     path('stats/fish/', drf_views.StatsFishAPIView.as_view(), name='v1_stats_fish'),
     path('stats/other/', drf_views.StatsOtherAPIView.as_view(), name='v1_stats_other'),

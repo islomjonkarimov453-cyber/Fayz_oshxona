@@ -29,6 +29,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   int _tab = 0;
   String _period = 'today';
+  String _date = '';
 
   AppStore get _store => widget.store;
 
@@ -47,8 +48,68 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
-  List<Sale> get _sales =>
-      _store.snapshot.sales.where((sale) => sale.time >= _from).toList();
+  String _dateKey(int ms) {
+    final d = DateTime.fromMillisecondsSinceEpoch(ms);
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$m-$day';
+  }
+
+  String get _todayKey => _dateKey(DateTime.now().millisecondsSinceEpoch);
+
+  List<Sale> get _sales {
+    if (_date.isNotEmpty) {
+      return _store.snapshot.sales
+          .where((sale) => _dateKey(sale.time) == _date)
+          .toList();
+    }
+    return _store.snapshot.sales.where((sale) => sale.time >= _from).toList();
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final first = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: _store.snapshot.retentionDays));
+    final initial = _date.isEmpty ? now : DateTime.parse(_date);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: now,
+    );
+    if (picked == null || !mounted) return;
+    final m = picked.month.toString().padLeft(2, '0');
+    final day = picked.day.toString().padLeft(2, '0');
+    setState(() => _date = '${picked.year}-$m-$day');
+  }
+
+  Future<void> _closeDay() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Bugungi kunni yopish'),
+        content: const Text('Bugungi kunlik yopilsinmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Yopish'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final ok = await runMutation(
+      context,
+      _store,
+      () => _store.closeDay(),
+      successText: 'Kun yopildi',
+    );
+    if (ok && mounted) setState(() => _date = _todayKey);
+  }
 
   Future<void> _reopenSale(Sale sale) async {
     final confirmed = await showDialog<bool>(
@@ -155,6 +216,27 @@ class _AdminScreenState extends State<AdminScreen> {
                           showCheckmark: false,
                         ),
                       ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InputChip(
+                        avatar: Icon(
+                          Icons.calendar_month,
+                          size: 16,
+                          color: palette.mut,
+                        ),
+                        label: Text(
+                          _date.isEmpty ? 'Sana' : _date,
+                          style: TextStyle(fontSize: 12, color: palette.tx),
+                        ),
+                        onPressed: _pickDate,
+                        onDeleted: _date.isEmpty
+                            ? null
+                            : () => setState(() => _date = ''),
+                        deleteIcon: _date.isEmpty
+                            ? null
+                            : Icon(Icons.close, size: 16, color: palette.mut),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -552,10 +634,57 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Widget _salesTab(BuildContext context) {
+    final palette = AppPalette.of(context);
     final sales = _sales.reversed.toList();
+    final selected = _date.isEmpty ? _todayKey : _date;
+    final closed = _store.snapshot.closedDates.contains(selected);
     return _scroll([
+      Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: palette.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: palette.line),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    selected,
+                    style: TextStyle(
+                      color: palette.tx,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    closed ? 'Yopilgan' : 'Oxirgi ${_store.snapshot.retentionDays} kun saqlanadi',
+                    style: TextStyle(
+                      color: closed ? palette.ok : palette.mut,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: closed ? null : _closeDay,
+              icon: const Icon(Icons.lock_clock_outlined, size: 18),
+              label: const Text('Kunni yopish'),
+              style: FilledButton.styleFrom(
+                backgroundColor: palette.ok,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
       if (sales.isEmpty)
-        const EmptyCard('Bu davrda sotuv yo\'q')
+        const EmptyCard('Bu sanada sotuv yo\'q')
       else
         ...sales.map(
           (sale) => Padding(

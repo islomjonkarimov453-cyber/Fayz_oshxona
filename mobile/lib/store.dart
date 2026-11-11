@@ -343,4 +343,8 @@ class AppStore extends ChangeNotifier {
   Future<void> clearSales() async {
     await _api.delete('/sales/clear/');
   }
+
+  Future<void> closeDay() async {
+    await _api.post('/settings/close-day/');
+  }
 }

@@ -253,10 +253,14 @@ function back(){
 }
 
 /* ---------- ADMIN ---------- */
-let atab='home',aper='today';
+let atab='home',aper='today',sdate='';
 const SM=' soʻm';
 function setTab(t){atab=t;render()}
 function setPer(p){aper=p;render()}
+function setDate(v){sdate=v||'';render()}
+function dkey(t){const d=new Date(t);const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())}
+function todayKey(){return dkey(Date.now())}
+function isClosedDate(k){return (S.closedDates||[]).includes(k)}
 function reprint(id){const x=S.sales.find(y=>y.id===id);if(x)receipt(x)}
 const pr=(x,k)=>(x.prices||S.prices)[k]||0;
 const nm=k=>ITEMS.find(i=>i[0]===k)[1];
@@ -266,7 +270,7 @@ function salesTable(list){
 }
 function admin(){
   const t0=new Date().setHours(0,0,0,0),from=aper==='today'?t0:aper==='week'?t0-6*864e5:0;
-  const sl=S.sales.filter(x=>x.time>=from);
+  const sl=sdate?S.sales.filter(x=>dkey(x.time)===sdate):S.sales.filter(x=>x.time>=from);
   const qty=k=>sl.reduce((a,x)=>a+(x.items[k]||0),0);
   const amt=k=>sl.reduce((a,x)=>a+(x.items[k]||0)*pr(x,k),0);
   const rev=sl.reduce((a,x)=>a+x.total,0),fees=sl.reduce((a,x)=>a+(x.fee||0),0);
@@ -293,11 +297,13 @@ function admin(){
   }else if(atab==='other'){
     b=`<div class="card scroll"><table class="tt"><thead><tr><th>Mahsulot</th><th class="num">Narxi</th><th class="num">Sotilgan</th><th class="num">Summa</th></tr></thead><tbody>${OTH.map(k=>`<tr><td><b>${nm(k)}</b></td><td class="num">${f(S.prices[k])}</td><td class="num">${kg(qty(k))} dona</td><td class="num">${f(amt(k))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="3">Jami</td><td class="num">${f(OTH.reduce((a,k)=>a+amt(k),0))}</td></tr></tfoot></table></div>`;
   }else if(atab==='sales'){
-    b=salesTable(sl.slice().reverse());
+    const sel=sdate||todayKey();
+    const closed=isClosedDate(sel);
+    b=`<div class="card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>${sel}</b>${closed?' · <span style="color:var(--ok)">Yopilgan</span>':''}<br><small style="color:var(--mut)">Oxirgi ${S.retentionDays||10} kun saqlanadi</small></div><button class="btn" onclick="closeDay()" ${closed?'disabled style="opacity:.5"':''}>🔒 Bugungi kunni yopish</button></div>`+salesTable(sl.slice().reverse());
   }else{
     b=`<h2 style="margin-top:0">🐟 Baliq narxlari (1 kg)</h2><div class="pr">${FISH.map(inp).join('')}</div><h2>🥤 Non va ichimliklar (1 dona)</h2><div class="pr">${OTH.map(inp).join('')}</div><h2>📦 Qoldiq</h2><div class="card"><p style="color:var(--mut);font-size:13px;margin-top:0">Tabaka — nechta dona qoldigʻi bor. Sotilganda avtomatik kamayadi.</p><div class="pr"><div><label>Tabaka qoldigʻi (dona)</label><input type="number" min="0" step="1" value="${(S.stock||{}).tabaka||0}" onchange="setStock('tabaka',this.value)"></div></div></div><h2>Xizmat haqi</h2><div class="pr"><div><label>Foiz (%)</label><input type="number" min="0" max="100" value="${svc()}" onchange="setSvc(this.value)"></div></div><h2>Xavfli boʻlim</h2><button class="btn bad" onclick="resetAll()">Barcha sotuvlarni tozalash</button><div style="height:10px"></div><button class="btn bad" onclick="clearSales()">Faqat barcha cheklarni o‘chirish</button>`;
   }
-  return `<div class="adm"><aside class="side">${tabs.map(([k,t])=>`<button class="${atab===k?'on':''}" onclick="setTab('${k}')">${t}</button>`).join('')}</aside><section>${atab==='set'?'':`<div class="per">${pers.map(([k,t])=>`<button class="${aper===k?'on':''}" onclick="setPer('${k}')">${t}</button>`).join('')}</div>`}${b}</section></div>`;
+  return `<div class="adm"><aside class="side">${tabs.map(([k,t])=>`<button class="${atab===k?'on':''}" onclick="setTab('${k}')">${t}</button>`).join('')}</aside><section>${atab==='set'?'':`<div class="per">${pers.map(([k,t])=>`<button class="${aper===k?'on':''}" onclick="setPer('${k}')">${t}</button>`).join('')}<input type="date" value="${sdate}" onchange="setDate(this.value)" style="margin-left:auto;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--tx)"></div>`}${b}</section></div>`;
 }
 let fwKey='sazan',fwKg='';
 function saveFishList(list){return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({fishList:list})}))}
@@ -323,9 +329,13 @@ function clearSales(){
   if(!confirm('Barcha cheklar oʻchiriladi. Davom etasizmi?'))return;
   return runMutation(()=>api('/sales/clear/',{method:'DELETE'}));
 }
+function closeDay(){
+  if(!confirm('Bugungi kunlik yopilsinmi?'))return;
+  return runMutation(async()=>{await api('/settings/close-day/',{method:'POST'});sdate=todayKey()});
+}
 
 /* ---------- SERVER BILAN ALOQA ---------- */
-function norm(x){x=x||{};x.prices={...DEF.prices,...(x.prices||{})};x.tables=x.tables||{};x.tickets=x.tickets||[];x.sales=x.sales||[];x.seq=x.seq||1;if(x.service==null)x.service=10;x.fishList=x.fishList||[];x.stock=x.stock||{};for(const k in x.tables){const t=x.tables[k];if(t)t.items=t.items||{}}x.tickets.forEach(t=>{if(t)t.items=t.items||{}});x.sales.forEach(s=>{if(s){s.items=s.items||{};s.prices=s.prices||{}}});return x}
+function norm(x){x=x||{};x.prices={...DEF.prices,...(x.prices||{})};x.tables=x.tables||{};x.tickets=x.tickets||[];x.sales=x.sales||[];x.seq=x.seq||1;if(x.service==null)x.service=10;x.fishList=x.fishList||[];x.stock=x.stock||{};x.closedDates=x.closedDates||[];x.retentionDays=x.retentionDays||10;for(const k in x.tables){const t=x.tables[k];if(t)t.items=t.items||{}}x.tickets.forEach(t=>{if(t)t.items=t.items||{}});x.sales.forEach(s=>{if(s){s.items=s.items||{};s.prices=s.prices||{}}});return x}
 function apply(d){S=norm(d.state);rev=(d.rev!=null?d.rev:(d.state&&d.state._rev)||0)}
 function status(ok){const e=document.getElementById('st');if(e){e.textContent=ok?'\u25cf onlayn':'\u25cf aloqa yoʻq';e.style.color=ok?'var(--ok)':'var(--bad)'}}
 function errText(d){

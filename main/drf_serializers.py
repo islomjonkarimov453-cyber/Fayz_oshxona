@@ -326,10 +326,11 @@ class AppStateSerializer(serializers.ModelSerializer):
     seqS = serializers.IntegerField(source='seq_s', required=False, min_value=0)
     fishList = serializers.JSONField(source='fish_list', required=False)
     stock = serializers.JSONField(required=False)
+    closedDates = serializers.JSONField(source='closed_dates', required=False)
 
     class Meta:
         model = AppState
-        fields = ['prices', 'service', 'seq', 'seqS', 'fishList', 'stock']
+        fields = ['prices', 'service', 'seq', 'seqS', 'fishList', 'stock', 'closedDates']
         extra_kwargs = {
             'prices': {'required': False},
             'service': {'required': False},
@@ -378,6 +379,11 @@ class AppStateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f'{key} must be zero or positive')
             result[key] = int(number) if number.is_integer() else number
         return result
+
+    def validate_closedDates(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError('closedDates must be a list')
+        return [str(item) for item in value]
 
     def update(self, instance, validated_data):
         if 'prices' in validated_data:

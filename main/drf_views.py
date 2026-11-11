@@ -36,6 +36,7 @@ from .state import (
     PRODUCT_LABELS,
     STOCK_KEYS,
     bump_revision,
+    close_current_day,
     consume_fish_list,
     consume_stock,
     load_state_from_db,
@@ -307,6 +308,14 @@ class SettingsAPIView(APIView):
         serializer.save()
         bump_revision()
         app_state.refresh_from_db()
+        return Response(AppStateSerializer(app_state).data)
+
+
+class CloseDayAPIView(APIView):
+    def post(self, request):
+        close_current_day()
+        bump_revision()
+        app_state = AppState.get_state()
         return Response(AppStateSerializer(app_state).data)
 
 

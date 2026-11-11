@@ -1,7 +1,9 @@
 import json
 import queue
+from datetime import timedelta
 
 from django.db import transaction
+from django.utils import timezone
 
 from .models import AppState, Sale, TableState, Ticket
 
@@ -21,6 +23,7 @@ DEFAULT_PRICES = {
 FISH_KEYS = ('sazan', 'oq', 'buxarski', 'ilonbosh', 'amur')
 OTHER_KEYS = ('non', 'sous', 'fanta', 'cola', 'tabaka')
 STOCK_KEYS = ('tabaka',)
+SALE_RETENTION_DAYS = 10
 
 PRODUCT_LABELS = {
     'sazan': 'Sazan',
@@ -72,6 +75,33 @@ def get_rev():
     return AppState.get_state()._rev
 
 
+def sale_retention_cutoff_ms():
+    return int((timezone.now() - timedelta(days=SALE_RETENTION_DAYS)).timestamp() * 1000)
+
+
+def prune_old_sales():
+    deleted, _ = Sale.objects.filter(time__lt=sale_retention_cutoff_ms()).delete()
+    return deleted
+
+
+def today_local_iso():
+    return timezone.localtime().date().isoformat()
+
+
+def close_current_day():
+    app_state = AppState.get_state()
+    closed = list(app_state.closed_dates or [])
+    today = today_local_iso()
+    if today not in closed:
+        closed.append(today)
+    min_date = (timezone.localtime().date() - timedelta(days=SALE_RETENTION_DAYS - 1)).isoformat()
+    closed = sorted({d for d in closed if isinstance(d, str) and d >= min_date})[-SALE_RETENTION_DAYS:]
+    app_state.closed_dates = closed
+    app_state.save(update_fields=['closed_dates'])
+    prune_old_sales()
+    return closed
+
+
 def load_state_from_db():
     app_state = AppState.get_state()
 
@@ -79,6 +109,10 @@ def load_state_from_db():
     if prices != (app_state.prices or {}):
         app_state.prices = prices
         app_state.save(update_fields=['prices'])
+
+    if prune_old_sales():
+        app_state._rev = (app_state._rev or 0) + 1
+        app_state.save(update_fields=['_rev'])
 
     tables = {}
     for table_state in TableState.objects.all():
@@ -97,6 +131,8 @@ def load_state_from_db():
         'service': app_state.service,
         'fishList': app_state.fish_list or [],
         'stock': app_state.stock or {},
+        'closedDates': app_state.closed_dates or [],
+        'retentionDays': SALE_RETENTION_DAYS,
         '_rev': app_state._rev,
     }
 

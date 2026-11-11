@@ -214,6 +214,8 @@ class AppSnapshot {
     required this.rev,
     required this.fishList,
     required this.stock,
+    required this.closedDates,
+    required this.retentionDays,
   });
 
   final Map<String, double> prices;
@@ -226,6 +228,8 @@ class AppSnapshot {
   final int rev;
   final List<FishStock> fishList;
   final Map<String, double> stock;
+  final List<String> closedDates;
+  final int retentionDays;
 
   static const empty = AppSnapshot(
     prices: {},
@@ -238,6 +242,8 @@ class AppSnapshot {
     rev: 0,
     fishList: [],
     stock: {},
+    closedDates: [],
+    retentionDays: 10,
   );
 
   factory AppSnapshot.fromJson(Map<String, dynamic> json) {
@@ -282,6 +288,12 @@ class AppSnapshot {
       }
     }
 
+    final rawClosedDates = json['closedDates'];
+    final closedDates = <String>[
+      if (rawClosedDates is List)
+        for (final entry in rawClosedDates) entry.toString(),
+    ];
+
     return AppSnapshot(
       prices: itemsFrom(json['prices']),
       service: asDouble(json['service'], 10),
@@ -293,6 +305,8 @@ class AppSnapshot {
       rev: asInt(json['_rev'] ?? json['rev']),
       fishList: fishList,
       stock: itemsFrom(json['stock']),
+      closedDates: closedDates,
+      retentionDays: asInt(json['retentionDays'], 10),
     );
   }
 
