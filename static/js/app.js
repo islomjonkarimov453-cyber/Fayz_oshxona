@@ -187,7 +187,7 @@ function receipt(s){
   document.getElementById('modal').innerHTML=`<div class="modal"><div><div class="rc"><div style="text-align:center"><b>FAYZ BALIQXONASI</b><br>Chek №${s.id}</div><hr>
   <div>${lblx(s.table,s.linked_table||(S.tables[s.table]||{}).linked_table)}${address?`<br>📍 ${esc(address)}`:''}<br>${new Date(s.time).toLocaleString('uz')}</div><hr>${lines}<hr>
   <div class="l"><span>Taomlar</span><span>${f(s.sub??s.total)}</span></div>${s.pct>0?`<div class="l"><span>Xizmat (${s.pct}%)</span><span>${f(s.fee||0)}</span></div>`:''}<div class="l"><b>JAMI:</b><b>${f(s.total)} soʻm</b></div><hr><div style="text-align:center">Rahmat! Yana kutamiz 🐟</div></div>
-  <div class="acts" style="margin-top:10px"><button class="btn" onclick="window.print()">🖨 Chop etish</button><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Yopish</button></div></div></div>`;
+  <div class="acts" style="margin-top:10px"><button class="btn" onclick="window.print();document.getElementById('modal').innerHTML=''">🖨 Chekni chiqar</button><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Yopish</button></div></div></div>`;
 }
 
 /* ---------- OSHPAZ ---------- */

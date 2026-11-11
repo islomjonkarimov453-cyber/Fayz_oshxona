@@ -499,6 +499,8 @@ def table_state_detail(request, table_key):
         deleted, _ = TableState.objects.filter(table_key=table_key).delete()
         if not deleted:
             return _not_found()
+        if str(table_key).isdigit():
+            Table.objects.filter(number=int(table_key)).update(is_busy=False)
         bump_revision()
         return _json({'deleted': True, 'table_key': table_key})
     data = _payload(request)
@@ -534,6 +536,7 @@ def settings_reset(request):
         Sale.objects.all().delete()
         Ticket.objects.all().delete()
         TableState.objects.all().delete()
+        Table.objects.update(is_busy=False)
         app_state, _ = AppState.objects.select_for_update().get_or_create(pk=1)
         app_state.seq = 1
         app_state.seq_s = 0

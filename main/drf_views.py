@@ -281,6 +281,13 @@ class TableStateViewSet(RevisionMixin, viewsets.ModelViewSet):
     serializer_class = TableStateSerializer
     lookup_field = 'table_key'
 
+    def perform_destroy(self, instance):
+        table_key = str(instance.table_key)
+        instance.delete()
+        if table_key.isdigit():
+            Table.objects.filter(number=int(table_key)).update(is_busy=False)
+        bump_revision()
+
 
 class SettingsAPIView(APIView):
     def get(self, request):
@@ -309,6 +316,7 @@ class SettingsResetAPIView(APIView):
             Sale.objects.all().delete()
             Ticket.objects.all().delete()
             TableState.objects.all().delete()
+            Table.objects.update(is_busy=False)
             app_state, _ = AppState.objects.select_for_update().get_or_create(pk=1)
             app_state.seq = 1
             app_state.seq_s = 0

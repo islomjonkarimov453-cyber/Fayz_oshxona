@@ -668,17 +668,34 @@ class _SaleTile extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                  TextButton(
-                    onPressed: onReopen,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 28),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'Ochish',
-                      style: TextStyle(color: palette.pri, fontSize: 11),
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: onTap,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 28),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Chek',
+                          style: TextStyle(color: palette.ok, fontSize: 11),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: onReopen,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 28),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Ochish',
+                          style: TextStyle(color: palette.pri, fontSize: 11),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
