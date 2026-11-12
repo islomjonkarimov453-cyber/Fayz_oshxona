@@ -234,9 +234,15 @@ function unlock(){if(ensureAudio()){try{localStorage.setItem('soundOn','1')}catc
 ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{const had=!actx;if(ensureAudio()&&had)render()},{passive:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)ensureAudio()});
 const soundBar=()=>actx?'':'<button class="btn" style="width:100%;margin-bottom:10px;background:var(--warn)" onclick="unlock()">🔔 Ovozni yoqish (bir marta bosing)</button>';
+function ringNeed(){
+  const r=route();
+  if(r==='cook')return S.tickets.some(t=>!t.done&&!t.acc);
+  if(r==='waiter')return S.tickets.some(t=>t.done&&!t.seen);
+  return false;
+}
 function checkRing(){
-  const need=S.tickets.some(t=>!t.done&&!t.acc);
-  if(need&&!ringT){ring();ringT=setInterval(()=>{if(S.tickets.some(t=>!t.done&&!t.acc))ring();else checkRing()},5000)}
+  const need=ringNeed();
+  if(need&&!ringT){ring();ringT=setInterval(()=>{if(ringNeed())ring();else checkRing()},5000)}
   if(!need&&ringT){clearInterval(ringT);ringT=null}
 }
 function accept(id){return runMutation(()=>api(`/tickets/${id}/accept/`,{method:'POST'}))}
