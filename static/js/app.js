@@ -229,11 +229,14 @@ let actx=null,ringT=null;
 function tone(fq,t,d){const o=actx.createOscillator(),g=actx.createGain();o.type='square';o.frequency.value=fq;g.gain.value=.3;o.connect(g);g.connect(actx.destination);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+d)}
 function beep(){try{if(actx)[1000,1300].forEach((q,i)=>tone(q,i*.2,.18))}catch(e){}}
 function ring(){try{if(actx)[880,1100,880,1100,880].forEach((q,i)=>tone(q,i*.25,.2))}catch(e){}}
-function unlock(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();actx.resume();ring()}catch(e){}render()}
+function ensureAudio(){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return true}catch(e){return false}}
+function unlock(){if(ensureAudio()){try{localStorage.setItem('soundOn','1')}catch(e){}ring()}render()}
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{const had=!actx;if(ensureAudio()&&had)render()},{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)ensureAudio()});
 const soundBar=()=>actx?'':'<button class="btn" style="width:100%;margin-bottom:10px;background:var(--warn)" onclick="unlock()">🔔 Ovozni yoqish (bir marta bosing)</button>';
 function checkRing(){
-  const need=route()==='cook'&&S.tickets.some(t=>!t.done&&!t.acc);
-  if(need&&!ringT){ring();ringT=setInterval(()=>{if(route()==='cook'&&S.tickets.some(t=>!t.done&&!t.acc))ring();else checkRing()},5000)}
+  const need=S.tickets.some(t=>!t.done&&!t.acc);
+  if(need&&!ringT){ring();ringT=setInterval(()=>{if(S.tickets.some(t=>!t.done&&!t.acc))ring();else checkRing()},5000)}
   if(!need&&ringT){clearInterval(ringT);ringT=null}
 }
 function accept(id){return runMutation(()=>api(`/tickets/${id}/accept/`,{method:'POST'}))}
@@ -320,14 +323,13 @@ function admin(){
   return `<div class="adm"><aside class="side">${tabs.map(([k,t])=>`<button class="${atab===k?'on':''}" onclick="setTab('${k}')">${t}</button>`).join('')}</aside><section>${atab==='set'?'':`<div class="per">${pers.map(([k,t])=>`<button class="${aper===k?'on':''}" onclick="setPer('${k}')">${t}</button>`).join('')}<input type="date" value="${sdate}" onchange="setDate(this.value)" style="margin-left:auto;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--tx)"></div>`}${b}</section></div>`;
 }
 let fwKey='sazan',fwKg='';
-function saveFishList(list){return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({fishList:list})}))}
 function addFishWeight(){
   const kgv=parseFloat(String(fwKg).replace(',','.'));
   if(!kgv||kgv<=0){alert('Ogʻirlikni kiriting');return}
   fwKg='';
-  return saveFishList([...(S.fishList||[]),{id:Date.now(),key:fwKey,kg:kgv}]);
+  return runMutation(()=>api('/settings/fish/',{method:'POST',body:JSON.stringify({key:fwKey,kg:kgv})}));
 }
-function delFishWeight(id){return saveFishList((S.fishList||[]).filter(e=>e.id!==id))}
+function delFishWeight(id){return runMutation(()=>api('/settings/fish/',{method:'DELETE',body:JSON.stringify({id})}))}
 function setSvc(v){const n=Math.min(100,Math.max(0,parseFloat(v)||0));return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({service:n})}))}
 function setP(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({prices:{[k]:n}})}))}
 function setStock(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({stock:{[k]:n}})}))}

@@ -311,6 +311,46 @@ class SettingsAPIView(APIView):
         return Response(AppStateSerializer(app_state).data)
 
 
+class FishWeightAPIView(APIView):
+    def post(self, request):
+        key = str(request.data.get('key') or '').strip()
+        if key not in FISH_KEYS:
+            raise ValidationError({'key': 'baliq turi noto‘g‘ri'})
+        try:
+            kg = round(float(request.data.get('kg')), 2)
+        except (TypeError, ValueError):
+            raise ValidationError({'kg': 'og‘irlik noto‘g‘ri'})
+        if kg <= 0:
+            raise ValidationError({'kg': 'og‘irlik musbat bo‘lishi kerak'})
+        with transaction.atomic():
+            app_state, _ = AppState.objects.select_for_update().get_or_create(pk=1)
+            fish_list = list(app_state.fish_list or [])
+            fish_list.append({'id': now_ms(), 'key': key, 'kg': kg})
+            app_state.fish_list = fish_list
+            app_state.save(update_fields=['fish_list'])
+        bump_revision()
+        app_state.refresh_from_db()
+        return Response(AppStateSerializer(app_state).data)
+
+    def delete(self, request):
+        raw_id = request.data.get('id', request.query_params.get('id'))
+        try:
+            fish_id = int(raw_id)
+        except (TypeError, ValueError):
+            raise ValidationError({'id': 'id noto‘g‘ri'})
+        with transaction.atomic():
+            app_state, _ = AppState.objects.select_for_update().get_or_create(pk=1)
+            fish_list = [
+                entry for entry in (app_state.fish_list or [])
+                if int((entry or {}).get('id') or 0) != fish_id
+            ]
+            app_state.fish_list = fish_list
+            app_state.save(update_fields=['fish_list'])
+        bump_revision()
+        app_state.refresh_from_db()
+        return Response(AppStateSerializer(app_state).data)
+
+
 class CloseDayAPIView(APIView):
     def post(self, request):
         close_current_day()
