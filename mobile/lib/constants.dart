@@ -1,6 +1,4 @@
-// Ilovada ishlatiladigan doimiy qiymatlar va formatlash yordamchilari.
 
-/// Mahsulot tavsifi: kalit, nomi, o'lchov birligi, qadam.
 class ProductDef {
   const ProductDef(this.key, this.name, this.unit, this.step);
 

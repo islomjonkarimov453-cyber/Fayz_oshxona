@@ -158,6 +158,7 @@ def save_state_to_db(state, app_state, rev):
         table_state.items = data.get('items') or {}
         table_state.address = data.get('address')
         table_state.saboy = as_bool(data.get('saboy', False))
+        table_state.delivery = as_bool(data.get('delivery', False))
         table_state.linked_table = str(data.get('linked_table', data.get('linkedTable')) or '').strip() or None
         table_state.save()
     TableState.objects.exclude(table_key__in=keep_tables).delete()
@@ -200,6 +201,7 @@ def save_state_to_db(state, app_state, rev):
         sale.address = data.get('address')
         sale.prices = data.get('prices') or {}
         sale.linked_table = str(data.get('linked_table', data.get('linkedTable')) or '').strip() or None
+        sale.delivery = as_bool(data.get('delivery', False))
         sale.save()
     Sale.objects.exclude(id__in=keep_sales).delete()
 

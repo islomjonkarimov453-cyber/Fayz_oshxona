@@ -235,6 +235,7 @@ class SaleViewSet(RevisionMixin, viewsets.ModelViewSet):
                     'items': items,
                     'address': sale.address or '',
                     'saboy': str(table_key).startswith('S'),
+                    'delivery': sale.delivery,
                     'linked_table': sale.linked_table or None,
                 },
             )

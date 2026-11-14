@@ -2,6 +2,7 @@ const API='/api/v1';
 const FISH=['sazan','oq','buxarski','ilonbosh','amur'];
 const ITEMS=[['sazan','Sazan','kg',0.5],['oq','Oq baliq','kg',0.5],['buxarski','Buxarski','kg',0.5],['ilonbosh','Ilonbosh','kg',0.5],['amur','Amur','kg',0.5],['non','Non','dona',1],['sous','Sous','dona',1],['fanta','Fanta','dona',1],['cola','Cola','dona',1],['tabaka','Tabaka','dona',1]];
 const ROOMS=7;
+const DELIV_FEE=5000;
 const DEF={prices:{sazan:80000,oq:90000,buxarski:100000,ilonbosh:110000,amur:95000,non:3000,sous:5000,fanta:12000,cola:12000,tabaka:45000},tables:{},tickets:[],sales:[],seq:1,service:10,stock:{}};
 let S=norm(JSON.parse(JSON.stringify(DEF))),rev=0,cur=null,draft={},pick=false,mutating=false,fishCat='sazan',pendFish=null,draftFish=[],curFish=[],fishDirty=false;
 const f=n=>Math.round(n).toLocaleString('ru-RU');
@@ -23,7 +24,7 @@ const lblx=(k,link)=>isS(k)?'Saboy '+String(k).slice(1)+(link?' · Hona '+link:'
 const lbl=k=>lblx(k,(S.tables[k]||{}).linked_table||((S.sales.find(s=>s.table===k)||{}).linked_table));
 const pctFor=k=>isS(k)?0:svc();
 const fee=(s,k)=>Math.round(s*pctFor(k)/100);
-const grand=(it,k)=>money(it)+fee(money(it),k);
+const grand=(it,k)=>money(it)+fee(money(it),k)+((S.tables[k]||{}).delivery?DELIV_FEE:0);
 const hm=t=>new Date(t).toLocaleTimeString('uz',{hour:'2-digit',minute:'2-digit'});
 function go(r){location.hash=r;cur=null;draft={};draftFish=[];curFish=[];fishDirty=false;render()}
 window.addEventListener('hashchange',render);
@@ -66,13 +67,14 @@ function orderEditor(){
   const t=S.tables[cur]||{items:{}};
   const fishAll=curFish.concat(draftFish);
   const all=buildItems(t.items,draft,fishAll);
-  const sub=money(all),feeAmt=fee(sub,cur),total=sub+feeAmt;
+  const sub=money(all),feeAmt=fee(sub,cur),delivFee=isS(cur)&&t.delivery?DELIV_FEE:0,total=sub+feeAmt+delivFee;
   const newAmt=money(draft)+draftFish.reduce((s,x)=>s+x.kg*(S.prices[x.key]||0),0);
   const canSend=(Object.values(draft).some(v=>v!==0)||draftFish.length>0||fishDirty)&&!mutating;
   const canClose=money(all)>0&&!mutating;
   let h=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${lbl(cur)}</h2><button class="btn ghost" onclick="back()">← Orqaga</button></div>`;
   if(isS(cur)){
     h+=`<div style="margin-bottom:15px"><label style="font-weight:bold">📍 Manzil:</label><input type="text" value="${esc(t.address||'')}" onchange="saveSaboAddress('${cur}',this.value)" style="width:100%;padding:8px;margin-top:5px;border:1px solid var(--mut);border-radius:5px"></div>`;
+    if(route()==='cook')h+=`<div style="margin-bottom:15px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${t.delivery?'🛵 Dastavka':'🥡 Olib ketadi'}</b>${t.delivery?' <small style="color:var(--mut)">+5 000 soʻm</small>':''}</div><button class="btn ghost" style="width:auto;padding:6px 12px" onclick="toggleDelivery()">${t.delivery?'Olib ketadi':'Dastavka'}</button></div>`;
   }
   h+=`<div style="padding:8px 0"><button class="btn ghost" style="width:100%" onclick="pick=!pick;render()">🐟 Baliq qoʻshish ${pick?'▲':'▼'}</button>${pick?fishPicker():''}</div>`;
   if(fishAll.length){
@@ -93,7 +95,7 @@ function orderEditor(){
     <div class="q"><button onclick="chg('${k}',-${st})">−</button><input type="number" inputmode="decimal" min="0" step="${st}" value="${d}" onchange="setD('${k}',this.value)"><button onclick="chg('${k}',${st})">+</button>${del}</div>
     <div class="sum">${f(combined*S.prices[k])}</div></div>`;
   });
-  h+=`<div style="display:flex;justify-content:space-between;color:var(--mut);padding-top:10px"><span>Taomlar</span><span>${f(sub)} soʻm</span></div><div style="display:flex;justify-content:space-between;color:var(--mut)"><span>Xizmat haqi (${pctFor(cur)}%)</span><span>${f(feeAmt)} soʻm</span></div><div class="total"><span>Jami</span><span>${f(total)} soʻm</span></div>
+  h+=`<div style="display:flex;justify-content:space-between;color:var(--mut);padding-top:10px"><span>Taomlar</span><span>${f(sub)} soʻm</span></div><div style="display:flex;justify-content:space-between;color:var(--mut)"><span>Xizmat haqi (${pctFor(cur)}%)</span><span>${f(feeAmt)} soʻm</span></div>${delivFee?`<div style="display:flex;justify-content:space-between;color:var(--mut)"><span>Dastavka</span><span>${f(delivFee)} soʻm</span></div>`:''}<div class="total"><span>Jami</span><span>${f(total)} soʻm</span></div>
   <div class="acts"><button class="btn" onclick="send()" ${canSend?'':'disabled style="opacity:.5"'}>👨‍🍳 Yuborish (baliq → oshpaz)</button>
   <button class="btn ok" onclick="closeT()" ${canClose?'':'disabled style="opacity:.5"'}>🧾 Hisob va chek</button></div></div>`;
   return h;
@@ -152,7 +154,7 @@ async function send(){
     if(empty){
       if(S.tables[tb])await api(`/table-states/${encodeURIComponent(tb)}/`,{method:'DELETE'});
     }else{
-      const body={items,address:t.address||'',saboy:!!t.saboy,linked_table:t.linked_table||''};
+      const body={items,address:t.address||'',saboy:!!t.saboy,delivery:!!t.delivery,linked_table:t.linked_table||''};
       if(S.tables[tb])await api(`/table-states/${encodeURIComponent(tb)}/`,{method:'PATCH',body:JSON.stringify(body)});
       else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:tb,...body})});
     }
@@ -181,9 +183,9 @@ async function closeT(){
   const t=S.tables[tb]||{items:{}};
   const items=buildItems(t.items,draft,curFish.concat(draftFish));
   if(!money(items))return;
-  const sub=r2(money(items)),pct=pctFor(tb),feeAmt=fee(sub,tb);
+  const sub=r2(money(items)),pct=pctFor(tb),feeAmt=fee(sub,tb),delivFee=isS(tb)&&t.delivery?DELIV_FEE:0;
   const sale={
-    table:tb,items,sub,pct,fee:feeAmt,total:r2(sub+feeAmt),
+    table:tb,items,sub,pct,fee:feeAmt,delivery:!!t.delivery,total:r2(sub+feeAmt+delivFee),
     prices:{...S.prices},address:t.address||'',linked_table:t.linked_table||'',clear_table:true
   };
   mutating=true;
@@ -199,7 +201,7 @@ function receipt(s){
   const address=s.address||S.tables[s.table]?.address||'';
   document.getElementById('modal').innerHTML=`<div class="modal"><div><div class="rc"><div style="text-align:center"><b>FAYZ BALIQXONASI</b><br>Chek №${s.id}</div><hr>
   <div>${lblx(s.table,s.linked_table||(S.tables[s.table]||{}).linked_table)}${address?`<br>📍 ${esc(address)}`:''}<br>${new Date(s.time).toLocaleString('uz')}</div><hr>${lines}<hr>
-  <div class="l"><span>Taomlar</span><span>${f(s.sub??s.total)}</span></div>${s.pct>0?`<div class="l"><span>Xizmat (${s.pct}%)</span><span>${f(s.fee||0)}</span></div>`:''}<div class="l"><b>JAMI:</b><b>${f(s.total)} soʻm</b></div><hr><div style="text-align:center">Rahmat! Yana kutamiz 🐟</div></div>
+  <div class="l"><span>Taomlar</span><span>${f(s.sub??s.total)}</span></div>${s.pct>0?`<div class="l"><span>Xizmat (${s.pct}%)</span><span>${f(s.fee||0)}</span></div>`:''}${s.delivery?`<div class="l"><span>Dastavka</span><span>${f(DELIV_FEE)}</span></div>`:''}<div class="l"><b>JAMI:</b><b>${f(s.total)} soʻm</b></div><hr><div style="text-align:center">Rahmat! Yana kutamiz 🐟</div></div>
   <div class="acts" style="margin-top:10px"><button class="btn" onclick="window.print();document.getElementById('modal').innerHTML=''">🖨 Chekni chiqar</button><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Yopish</button></div></div></div>`;
 }
 
@@ -215,14 +217,14 @@ function cook(){
   const tk=t=>`<div class="card tk ${t.done?'done':!t.acc?'new':''}" style="margin-bottom:10px"><h3>${lbl(t.table)} <small style="color:var(--mut);font-weight:400">· ${hm(t.time)}</small></h3>${isS(t.table)?`<div style="background:var(--warn);color:var(--bg);padding:10px;border-radius:5px;margin:10px 0"><label>📍 Manzil:</label><input type="text" id="address_${t.table}" value="${esc(S.tables[t.table]?.address||'')}" onchange="saveSaboAddress('${t.table}',this.value)" style="width:100%;padding:6px;margin-top:4px;border:none;border-radius:3px"></div>`:''}<ul style="margin:0 0 10px;padding-left:20px">${ticketLines(t)}</ul>${t.done?'':`${t.acc?`<button class="btn ok" style="width:100%;font-size:18px;padding:16px" onclick="ready(${t.id})">🔥 Baliq pishdi</button>`:`<button class="btn" style="width:100%;font-size:18px;padding:16px" onclick="accept(${t.id})">🔔 Qabul qildim</button>`}`}</div>`;
   const tkDone=t=>`<div class="card tk done" style="margin-bottom:10px"><h3>${lbl(t.table)} <small style="color:var(--mut);font-weight:400">· ${hm(t.time)}</small></h3>${isS(t.table)?`<div style="background:var(--warn);color:var(--bg);padding:10px;border-radius:5px;margin:10px 0"><label>📍 Manzil:</label><input type="text" id="address_${t.table}" value="${esc(S.tables[t.table]?.address||'')}" onchange="saveSaboAddress('${t.table}',this.value)" style="width:100%;padding:6px;margin-top:4px;border:none;border-radius:3px"></div>`:''}<ul style="margin:0 0 10px;padding-left:20px">${ticketLines(t)}</ul></div>`;
   const pending=S.tickets.some(t=>!t.done&&!t.acc);
-  return soundBar()+(pending?`<div class="card" style="border-color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--card));margin-bottom:12px"><b>🔔 Yangi zakaz keldi!</b></div>`:'')+`<button class="btn" style="width:100%;margin-bottom:15px" onclick="newSaboy()">🥡 SABOY (olib ketadi)</button><h2 style="margin-top:0">Yangi buyurtmalar (${open.length})</h2>${open.map(tk).join('')||'<div class="card" style="color:var(--mut)">Hozircha buyurtma yoʻq</div>'}
+  return soundBar()+(pending?`<div class="card" style="border-color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--card));margin-bottom:12px"><b>🔔 Yangi zakaz keldi!</b></div>`:'')+`<button class="btn" style="width:100%;margin-bottom:15px" onclick="askSaboyDelivery('')">🥡 SABOY (olib ketadi)</button><h2 style="margin-top:0">Yangi buyurtmalar (${open.length})</h2>${open.map(tk).join('')||'<div class="card" style="color:var(--mut)">Hozircha buyurtma yoʻq</div>'}
   ${done.length?'<h2>Tayyor boʻlganlar</h2>'+done.map(tkDone).join(''):''}`;
 }
 function ready(id){return runMutation(()=>api(`/tickets/${id}/ready/`,{method:'POST'}))}
 async function saveSaboAddress(key,v){
   return runMutation(async()=>{
     if(S.tables[key])await api(`/table-states/${encodeURIComponent(key)}/`,{method:'PATCH',body:JSON.stringify({address:v})});
-    else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:key,items:{},address:v,saboy:isS(key)})});
+    else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:key,items:{},address:v,saboy:isS(key),delivery:!!(S.tables[key]||{}).delivery})});
   });
 }
 let actx=null,ringT=null;
@@ -246,7 +248,7 @@ function checkRing(){
   if(!need&&ringT){clearInterval(ringT);ringT=null}
 }
 function accept(id){return runMutation(()=>api(`/tickets/${id}/accept/`,{method:'POST'}))}
-async function newSaboy(linked=''){
+async function newSaboy(linked='',delivery=false){
   if(mutating)return;
   mutating=true;
   try{
@@ -254,7 +256,7 @@ async function newSaboy(linked=''){
     const next=(settings.seqS||0)+1;
     await api('/settings/',{method:'PATCH',body:JSON.stringify({seqS:next})});
     const key='S'+next;
-    await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:key,items:{},saboy:true,linked_table:linked||''})});
+    await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:key,items:{},saboy:true,delivery:!!delivery,linked_table:linked||''})});
     cur=key;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];curFish=[];fishDirty=false;
     await sync();
   }catch(e){showError(e)}finally{mutating=false}
@@ -268,6 +270,18 @@ function askSaboyRoom(){
   document.getElementById('modal').innerHTML=`<div class="modal"><div><h3>🥡 Qaysi hona uchun saboy?</h3><div class="grid">${rooms.map(k=>`<button class="btn ${busy(k)?'':'ghost'}" onclick="pickSaboyRoom('${k}')">Hona ${k}${busy(k)?' · band':''}</button>`).join('')}</div><div class="acts" style="margin-top:12px"><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Bekor qilish</button></div></div></div>`;
 }
 function pickSaboyRoom(k){document.getElementById('modal').innerHTML='';return newSaboy(k)}
+function askSaboyDelivery(linked=''){
+  document.getElementById('modal').innerHTML=`<div class="modal"><div><h3>🥡 Saboy qanday?</h3><div class="grid"><button class="btn" onclick="pickSaboyDelivery('${linked}',true)">🛵 Dastavka<br><small>+5 000 soʻm</small></button><button class="btn ghost" onclick="pickSaboyDelivery('${linked}',false)">🥡 Olib ketadi<br><small>Qoʻshimcha pul yoʻq</small></button></div><div class="acts" style="margin-top:12px"><button class="btn ghost" onclick="document.getElementById('modal').innerHTML=''">Bekor qilish</button></div></div></div>`;
+}
+function pickSaboyDelivery(linked,d){document.getElementById('modal').innerHTML='';return newSaboy(linked,d)}
+async function toggleDelivery(){
+  const k=cur;if(!k||!isS(k))return;
+  const delivery=!((S.tables[k]||{}).delivery);
+  return runMutation(async()=>{
+    if(S.tables[k])await api(`/table-states/${encodeURIComponent(k)}/`,{method:'PATCH',body:JSON.stringify({delivery})});
+    else await api('/table-states/',{method:'POST',body:JSON.stringify({table_key:k,items:{},saboy:true,delivery})});
+  });
+}
 function back(){
   const k=cur;cur=null;draft={};pick=false;fishCat='sazan';pendFish=null;draftFish=[];curFish=[];fishDirty=false;render();
   if(isS(k)&&S.tables[k]&&!money(S.tables[k].items)){
