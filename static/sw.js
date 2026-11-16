@@ -1,7 +1,8 @@
-const CACHE_NAME = 'fayz-baliqxona-v4';
+const CACHE_NAME = 'fayz-baliqxona-v5';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/app.js',
+  '/static/images/img_1.png',
   '/static/images/logo.svg',
   '/static/images/favicon.svg',
   '/static/images/icon-192.png',
@@ -49,7 +50,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Sahifalar — avval tarmoq, ulanish bo'lmasa kesh
   event.respondWith(
     fetch(request)
       .then((response) => {

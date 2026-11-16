@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0f766e">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="{% static 'images/icon-180.png' %}">
-<link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'css/style.css' %}?v=4">
 <style>
   body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
   .login-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:32px 26px;box-shadow:0 12px 40px rgba(0,0,0,.12)}
@@ -38,7 +38,7 @@
 </head>
 <body>
 <div class="login-card">
-  <div class="login-logo">🐟</div>
+  <div class="login-logo"><img src="{% static 'images/img_1.png' %}" alt="" style="width:72px;height:72px;object-fit:contain"></div>
   <h1>Fayz Baliqxonasi</h1>
   <p class="sub">Davom etish uchun kiring</p>
   {% if error %}<div class="login-err">{{ error }}</div>{% endif %}

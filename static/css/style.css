@@ -39,7 +39,7 @@ h2{font-size:17px;margin:18px 0 8px}
 .rc hr{border:0;border-top:1px dashed #000}.rc .l{display:flex;justify-content:space-between}
 @media print{body *{visibility:hidden}.rc,.rc *{visibility:visible}.rc{position:absolute;left:0;top:0;max-width:none}}
 h1{display:flex;align-items:center;gap:8px}
-.logo{width:28px;height:28px}
+.logo{width:32px;height:32px;object-fit:contain}
 .st{margin-left:auto;font-size:12px;font-weight:600}
 main.wide{max-width:1250px}
 .adm{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}
