@@ -331,15 +331,17 @@ class AppStateSerializer(serializers.ModelSerializer):
     seqS = serializers.IntegerField(source='seq_s', required=False, min_value=0)
     fishList = serializers.JSONField(source='fish_list', required=False)
     stock = serializers.JSONField(required=False)
+    costs = serializers.JSONField(required=False)
     closedDates = serializers.JSONField(source='closed_dates', required=False)
 
     class Meta:
         model = AppState
-        fields = ['prices', 'service', 'seq', 'seqS', 'fishList', 'stock', 'closedDates']
+        fields = ['prices', 'service', 'seq', 'seqS', 'fishList', 'stock', 'costs', 'closedDates']
         extra_kwargs = {
             'prices': {'required': False},
             'service': {'required': False},
             'seq': {'required': False},
+            'costs': {'required': False},
         }
 
     def validate_prices(self, value):
@@ -385,6 +387,20 @@ class AppStateSerializer(serializers.ModelSerializer):
             result[key] = int(number) if number.is_integer() else number
         return result
 
+    def validate_costs(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('costs must be an object')
+        result = {}
+        try:
+            for key, raw in value.items():
+                number = float(raw)
+                if number < 0:
+                    raise serializers.ValidationError(f'{key} must be zero or positive')
+                result[key] = int(number) if number.is_integer() else number
+        except (TypeError, ValueError, InvalidOperation):
+            raise serializers.ValidationError('costs are invalid')
+        return result
+
     def validate_closedDates(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError('closedDates must be a list')
@@ -396,5 +412,10 @@ class AppStateSerializer(serializers.ModelSerializer):
                 **DEFAULT_PRICES,
                 **(instance.prices or {}),
                 **validated_data['prices'],
+            }
+        if 'costs' in validated_data:
+            validated_data['costs'] = {
+                **(instance.costs or {}),
+                **validated_data['costs'],
             }
         return super().update(instance, validated_data)

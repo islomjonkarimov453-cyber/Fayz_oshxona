@@ -3,7 +3,7 @@ const FISH=['sazan','oq','buxarski','ilonbosh','amur'];
 const ITEMS=[['sazan','Sazan','kg',0.5],['oq','Oq baliq','kg',0.5],['buxarski','Buxarski','kg',0.5],['ilonbosh','Ilonbosh','kg',0.5],['amur','Amur','kg',0.5],['non','Non','dona',1],['sous','Sous','dona',1],['fanta','Fanta','dona',1],['cola','Cola','dona',1],['tabaka','Tabaka','dona',1]];
 const ROOMS=7;
 const DELIV_FEE=5000;
-const DEF={prices:{sazan:80000,oq:90000,buxarski:100000,ilonbosh:110000,amur:95000,non:3000,sous:5000,fanta:12000,cola:12000,tabaka:45000},tables:{},tickets:[],sales:[],seq:1,service:10,stock:{}};
+const DEF={prices:{sazan:80000,oq:90000,buxarski:100000,ilonbosh:110000,amur:95000,non:3000,sous:5000,fanta:12000,cola:12000,tabaka:45000},costs:{sazan:0,oq:0,buxarski:0,ilonbosh:0,amur:0,non:0,sous:0,fanta:0,cola:0,tabaka:0},tables:{},tickets:[],sales:[],seq:1,service:10,stock:{}};
 let S=norm(JSON.parse(JSON.stringify(DEF))),rev=0,cur=null,draft={},pick=false,mutating=false,fishCat='sazan',pendFish=null,draftFish=[],curFish=[],fishDirty=false;
 const f=n=>Math.round(n).toLocaleString('ru-RU');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -312,15 +312,18 @@ function admin(){
   const amt=k=>sl.reduce((a,x)=>a+(x.items[k]||0)*pr(x,k),0);
   const rev=sl.reduce((a,x)=>a+x.total,0),fees=sl.reduce((a,x)=>a+(x.fee||0),0);
   const fishKg=FISH.reduce((a,k)=>a+qty(k),0),fishSum=FISH.reduce((a,k)=>a+amt(k),0);
+  const costOf=k=>qty(k)*((S.costs||{})[k]||0);
+  const profit=ITEMS.reduce((a,[k])=>a+amt(k)-costOf(k),0),costSum=ITEMS.reduce((a,[k])=>a+costOf(k),0);
   const OTH=['non','sous','fanta','cola','tabaka'];
-  const tabs=[['home','📊 Umumiy'],['fish','🐟 Baliq hisoboti'],['weights','⚖️ Ogʻirliklar'],['other','🥤 Non va ichimlik'],['sales','🧾 Sotuvlar tarixi'],['set','⚙️ Narxlar va sozlama']];
+  const tabs=[['home','📊 Umumiy'],['profit','💰 Foyda'],['fish','🐟 Baliq hisoboti'],['weights','⚖️ Ogʻirliklar'],['other','🥤 Non va ichimlik'],['sales','🧾 Sotuvlar tarixi'],['set','⚙️ Narxlar va sozlama']];
   const pers=[['today','Bugun'],['week','Oxirgi 7 kun'],['all','Hammasi']];
   const kpi=(v,l,c)=>`<div class="card stat kpi" style="border-top-color:${c}"><b>${v}</b><span>${l}</span></div>`;
   const inp=k=>`<div><label>${nm(k)} (soʻm)</label><input type="number" min="0" value="${S.prices[k]}" onchange="setP('${k}',this.value)"></div>`;
+  const inpC=k=>`<div><label>${nm(k)} — xarid narxi (soʻm)</label><input type="number" min="0" value="${(S.costs||{})[k]||0}" onchange="setCost('${k}',this.value)"></div>`;
   let b='';
   if(atab==='home'){
     const busy=Object.entries(S.tables).filter(([n,t])=>money(t.items)>0);
-    b=`<div class="grid">${kpi(f(rev)+SM,'Umumiy tushum (xizmat bilan)','var(--pri)')}${kpi(f(rev-fees)+SM,'Taomlar summasi','var(--ok)')}${kpi(f(fees)+SM,'Xizmat haqi','var(--warn)')}${kpi(sl.length,'Chiqarilgan cheklar','var(--mut)')}${kpi(kg(fishKg)+' kg','Sotilgan baliq','var(--pri)')}${kpi(busy.filter(([n])=>!isS(n)).length+' / '+ROOMS,'Hozir band honalar','var(--bad)')}</div>
+    b=`<div class="grid">${kpi(f(rev)+SM,'Umumiy tushum (xizmat bilan)','var(--pri)')}${kpi(f(rev-fees)+SM,'Taomlar summasi','var(--ok)')}${kpi(f(fees)+SM,'Xizmat haqi','var(--warn)')}${kpi(sl.length,'Chiqarilgan cheklar','var(--mut)')}${kpi(f(profit)+SM,'Sof foyda','var(--ok)')}${kpi(kg(fishKg)+' kg','Sotilgan baliq','var(--pri)')}${kpi(busy.filter(([n])=>!isS(n)).length+' / '+ROOMS,'Hozir band honalar','var(--bad)')}</div>
     <h2>Hozir band honalar</h2><div class="card">${busy.map(([n,t])=>`<div class="row"><div class="n"><b>${lbl(n)}</b>${t.address?`<br><small style="color:var(--mut)">📍 ${esc(t.address)}</small>`:''}</div><div class="sum">${f(grand(t.items,n))}${SM}</div></div>`).join('')||'<span style="color:var(--mut)">Hamma hona boʻsh</span>'}</div>
     <h2>Oxirgi cheklar</h2>${salesTable(sl.slice(-5).reverse())}`;
   }else if(atab==='fish'){
@@ -333,12 +336,16 @@ function admin(){
     ${(S.fishList||[]).map(e=>`<div class="row"><div class="n"><b>${nm(e.key)}</b><small>${kg(e.kg)} kg</small></div><button class="btn bad" style="padding:4px 12px" onclick="delFishWeight(${e.id})">🗑</button></div>`).join('')||'<span style="color:var(--mut)">Hali baliq kiritilmagan</span>'}</div>`;
   }else if(atab==='other'){
     b=`<div class="card scroll"><table class="tt"><thead><tr><th>Mahsulot</th><th class="num">Narxi</th><th class="num">Sotilgan</th><th class="num">Summa</th></tr></thead><tbody>${OTH.map(k=>`<tr><td><b>${nm(k)}</b></td><td class="num">${f(S.prices[k])}</td><td class="num">${kg(qty(k))} dona</td><td class="num">${f(amt(k))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="3">Jami</td><td class="num">${f(OTH.reduce((a,k)=>a+amt(k),0))}</td></tr></tfoot></table></div>`;
+  }else if(atab==='profit'){
+    b=`<div class="grid">${kpi(f(ITEMS.reduce((a,[k])=>a+amt(k),0))+SM,'Jami tushum','var(--pri)')}${kpi(f(costSum)+SM,'Jami xarid (tan narx)','var(--warn)')}${kpi(f(profit)+SM,'Sof foyda','var(--ok)')}</div>
+    <div class="card scroll"><table class="tt"><thead><tr><th>Mahsulot</th><th class="num">Sotilgan</th><th class="num">Sotuv narxi</th><th class="num">Tushum</th><th class="num">Xarid narxi</th><th class="num">Xarid summasi</th><th class="num">Foyda</th></tr></thead><tbody>${ITEMS.map(([k])=>{const pr2=amt(k)-costOf(k);return `<tr><td><b>${nm(k)}</b></td><td class="num">${FISH_SET.has(k)?kg(qty(k))+' kg':kg(qty(k))+' dona'}</td><td class="num">${f(S.prices[k]||0)}</td><td class="num">${f(amt(k))}</td><td class="num">${f((S.costs||{})[k]||0)}</td><td class="num">${f(costOf(k))}</td><td class="num" style="color:${pr2>=0?'var(--ok)':'var(--bad)'};font-weight:700">${f(pr2)}</td></tr>`}).join('')}</tbody><tfoot><tr><td colspan="4">Jami</td><td></td><td class="num">${f(costSum)}</td><td class="num" style="color:${profit>=0?'var(--ok)':'var(--bad)'}">${f(profit)}</td></tr></tfoot></table></div>
+    <p style="color:var(--mut);font-size:13px">Xarid narxlarini "⚙️ Narxlar va sozlama" bo'limida kiriting. Baliq uchun 1 kg, boshqalar uchun 1 dona narxi.</p>`;
   }else if(atab==='sales'){
     const sel=sdate||todayKey();
     const closed=isClosedDate(sel);
     b=`<div class="card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>${sel}</b>${closed?' · <span style="color:var(--ok)">Yopilgan</span>':''}<br><small style="color:var(--mut)">Oxirgi ${S.retentionDays||10} kun saqlanadi</small></div><button class="btn" onclick="closeDay()" ${closed?'disabled style="opacity:.5"':''}>🔒 Bugungi kunni yopish</button></div>`+salesTable(sl.slice().reverse());
   }else{
-    b=`<h2 style="margin-top:0">🐟 Baliq narxlari (1 kg)</h2><div class="pr">${FISH.map(inp).join('')}</div><h2>🥤 Non va ichimliklar (1 dona)</h2><div class="pr">${OTH.map(inp).join('')}</div><h2>📦 Qoldiq</h2><div class="card"><p style="color:var(--mut);font-size:13px;margin-top:0">Tabaka — nechta dona qoldigʻi bor. Sotilganda avtomatik kamayadi.</p><div class="pr"><div><label>Tabaka qoldigʻi (dona)</label><input type="number" min="0" step="1" value="${(S.stock||{}).tabaka||0}" onchange="setStock('tabaka',this.value)"></div></div></div><h2>Xizmat haqi</h2><div class="pr"><div><label>Foiz (%)</label><input type="number" min="0" max="100" value="${svc()}" onchange="setSvc(this.value)"></div></div><h2>Xavfli boʻlim</h2><button class="btn bad" onclick="resetAll()">Barcha sotuvlarni tozalash</button><div style="height:10px"></div><button class="btn bad" onclick="clearSales()">Faqat barcha cheklarni o‘chirish</button>`;
+    b=`<h2 style="margin-top:0">🐟 Baliq narxlari (1 kg)</h2><div class="pr">${FISH.map(inp).join('')}</div><h2>🥤 Non va ichimliklar (1 dona)</h2><div class="pr">${OTH.map(inp).join('')}</div><h2>💸 Xarid (tan) narxlari</h2><p style="color:var(--mut);font-size:13px;margin-top:0">Sof foydani hisoblash uchun mahsulotning sizga tushgan narxini kiriting. Baliq — 1 kg uchun, boshqalar — 1 dona uchun.</p><h2 style="margin-top:8px">🐟 Baliqlar (1 kg)</h2><div class="pr">${FISH.map(inpC).join('')}</div><h2 style="margin-top:8px">🥤 Non va ichimliklar (1 dona)</h2><div class="pr">${OTH.map(inpC).join('')}</div><h2>📦 Qoldiq</h2><div class="card"><p style="color:var(--mut);font-size:13px;margin-top:0">Tabaka — nechta dona qoldigʻi bor. Sotilganda avtomatik kamayadi.</p><div class="pr"><div><label>Tabaka qoldigʻi (dona)</label><input type="number" min="0" step="1" value="${(S.stock||{}).tabaka||0}" onchange="setStock('tabaka',this.value)"></div></div></div><h2>Xizmat haqi</h2><div class="pr"><div><label>Foiz (%)</label><input type="number" min="0" max="100" value="${svc()}" onchange="setSvc(this.value)"></div></div><h2>Xavfli boʻlim</h2><button class="btn bad" onclick="resetAll()">Barcha sotuvlarni tozalash</button><div style="height:10px"></div><button class="btn bad" onclick="clearSales()">Faqat barcha cheklarni o‘chirish</button>`;
   }
   return `<div class="adm"><aside class="side">${tabs.map(([k,t])=>`<button class="${atab===k?'on':''}" onclick="setTab('${k}')">${t}</button>`).join('')}</aside><section>${atab==='set'?'':`<div class="per">${pers.map(([k,t])=>`<button class="${aper===k?'on':''}" onclick="setPer('${k}')">${t}</button>`).join('')}<input type="date" value="${sdate}" onchange="setDate(this.value)" style="margin-left:auto;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--tx)"></div>`}${b}</section></div>`;
 }
@@ -352,6 +359,7 @@ function addFishWeight(){
 function delFishWeight(id){return runMutation(()=>api('/settings/fish/',{method:'DELETE',body:JSON.stringify({id})}))}
 function setSvc(v){const n=Math.min(100,Math.max(0,parseFloat(v)||0));return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({service:n})}))}
 function setP(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({prices:{[k]:n}})}))}
+function setCost(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({costs:{[k]:n}})}))}
 function setStock(k,v){const n=Math.max(0,parseFloat(v)||0);return runMutation(()=>api('/settings/',{method:'PATCH',body:JSON.stringify({stock:{[k]:n}})}))}
 function resetAll(){
   if(!confirm('Hamma sotuvlar va buyurtmalar oʻchiriladi. Davom etasizmi?'))return;
@@ -371,7 +379,7 @@ function closeDay(){
 }
 
 /* ---------- SERVER BILAN ALOQA ---------- */
-function norm(x){x=x||{};x.prices={...DEF.prices,...(x.prices||{})};x.tables=x.tables||{};x.tickets=x.tickets||[];x.sales=x.sales||[];x.seq=x.seq||1;if(x.service==null)x.service=10;x.fishList=x.fishList||[];x.stock=x.stock||{};x.closedDates=x.closedDates||[];x.retentionDays=x.retentionDays||10;for(const k in x.tables){const t=x.tables[k];if(t)t.items=t.items||{}}x.tickets.forEach(t=>{if(t)t.items=t.items||{}});x.sales.forEach(s=>{if(s){s.items=s.items||{};s.prices=s.prices||{}}});return x}
+function norm(x){x=x||{};x.prices={...DEF.prices,...(x.prices||{})};x.costs={...DEF.costs,...(x.costs||{})};x.tables=x.tables||{};x.tickets=x.tickets||[];x.sales=x.sales||[];x.seq=x.seq||1;if(x.service==null)x.service=10;x.fishList=x.fishList||[];x.stock=x.stock||{};x.closedDates=x.closedDates||[];x.retentionDays=x.retentionDays||10;for(const k in x.tables){const t=x.tables[k];if(t)t.items=t.items||{}}x.tickets.forEach(t=>{if(t)t.items=t.items||{}});x.sales.forEach(s=>{if(s){s.items=s.items||{};s.prices=s.prices||{}}});return x}
 function apply(d){S=norm(d.state);rev=(d.rev!=null?d.rev:(d.state&&d.state._rev)||0)}
 function status(ok){const e=document.getElementById('st');if(e){e.textContent=ok?'\u25cf onlayn':'\u25cf aloqa yoʻq';e.style.color=ok?'var(--ok)':'var(--bad)'}}
 function errText(d){

@@ -20,6 +20,19 @@ DEFAULT_PRICES = {
     'tabaka': 45000,
 }
 
+DEFAULT_COSTS = {
+    'sazan': 0,
+    'oq': 0,
+    'buxarski': 0,
+    'ilonbosh': 0,
+    'amur': 0,
+    'non': 0,
+    'sous': 0,
+    'fanta': 0,
+    'cola': 0,
+    'tabaka': 0,
+}
+
 FISH_KEYS = ('sazan', 'oq', 'buxarski', 'ilonbosh', 'amur')
 OTHER_KEYS = ('non', 'sous', 'fanta', 'cola', 'tabaka')
 STOCK_KEYS = ('tabaka',)
@@ -110,6 +123,11 @@ def load_state_from_db():
         app_state.prices = prices
         app_state.save(update_fields=['prices'])
 
+    costs = {**DEFAULT_COSTS, **(app_state.costs or {})}
+    if costs != (app_state.costs or {}):
+        app_state.costs = costs
+        app_state.save(update_fields=['costs'])
+
     if prune_old_sales():
         app_state._rev = (app_state._rev or 0) + 1
         app_state.save(update_fields=['_rev'])
@@ -131,6 +149,7 @@ def load_state_from_db():
         'service': app_state.service,
         'fishList': app_state.fish_list or [],
         'stock': app_state.stock or {},
+        'costs': app_state.costs,
         'closedDates': app_state.closed_dates or [],
         'retentionDays': SALE_RETENTION_DAYS,
         '_rev': app_state._rev,
@@ -144,8 +163,9 @@ def save_state_to_db(state, app_state, rev):
     app_state.seq_s = as_int(state.get('seqS'), 0)
     app_state.fish_list = state.get('fishList') or state.get('fish_list') or []
     app_state.stock = state.get('stock') or {}
+    app_state.costs = state.get('costs') or {}
     app_state._rev = rev
-    app_state.save(update_fields=['prices', 'service', 'seq', 'seq_s', 'fish_list', 'stock', '_rev'])
+    app_state.save(update_fields=['prices', 'service', 'seq', 'seq_s', 'fish_list', 'stock', 'costs', '_rev'])
 
     tables_data = state.get('tables') or {}
     existing_tables = {item.table_key: item for item in TableState.objects.select_for_update()}

@@ -60,6 +60,7 @@ class AppState(models.Model):
     seq_s = models.IntegerField(default=0)
     fish_list = models.JSONField(default=list)
     stock = models.JSONField(default=dict)
+    costs = models.JSONField(default=dict)
     closed_dates = models.JSONField(default=list)
     _rev = models.IntegerField(default=0)
 
@@ -79,6 +80,7 @@ class AppState(models.Model):
             'seqS': self.seq_s,
             'fishList': self.fish_list or [],
             'stock': self.stock or {},
+            'costs': self.costs or {},
             'closedDates': self.closed_dates or [],
             '_rev': self._rev,
         }

@@ -442,4 +442,17 @@ def settings_fields(data, instance=None, partial=False):
                 raise ValueError('stock must be zero or positive')
             stock[key] = number
         fields['stock'] = stock
+    if 'costs' in data:
+        raw = data.get('costs')
+        if raw is None:
+            raw = {}
+        if not isinstance(raw, dict):
+            raise ValueError('costs must be an object')
+        costs = {}
+        for key, value in raw.items():
+            number = _plain_number(value, 'cost')
+            if float(number) < 0:
+                raise ValueError('costs must be zero or positive')
+            costs[key] = number
+        fields['costs'] = costs
     return fields
