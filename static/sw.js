@@ -1,6 +1,6 @@
-const CACHE_NAME = 'fayz-baliqxona-v8';
+const CACHE_NAME = 'fayz-baliqxona-v9';
 const STATIC_ASSETS = [
-  '/static/css/style.css',
+  '/static/css/style.css?v=7',
   '/static/js/app.js',
   '/static/images/img_1.png',
   '/static/images/logo.svg',
