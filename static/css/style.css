@@ -70,23 +70,39 @@ h1{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:20px;font-
 .logo{width:36px;height:36px;object-fit:contain;border-radius:8px;background:#fff;padding:3px;box-shadow:0 2px 6px rgba(0,0,0,.15);border:1px solid var(--line)}
 .st{margin-left:auto;font-size:12px;font-weight:600}
 main.wide{max-width:1250px}
-.adm{display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start}
-.side{position:sticky;top:120px;display:flex;flex-direction:column;gap:6px;
-  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px;
-  box-shadow:0 4px 14px rgba(46,42,28,.07)}
+.adm{display:grid;grid-template-columns:250px 1fr;gap:20px;align-items:start}
+.adm>section{min-width:0}
+.side{position:sticky;top:120px;display:flex;flex-direction:column;gap:4px;
+  background:linear-gradient(180deg,var(--card),#fdf8ec);
+  border:1px solid var(--line);border-radius:18px;padding:12px;
+  box-shadow:0 6px 18px rgba(46,42,28,.08), inset 0 1px 0 #fff}
+.side::before{content:"Menyu";display:block;text-align:center;font-family:'Playfair Display',serif;
+  font-size:15px;font-weight:700;color:var(--pri);letter-spacing:2px;text-transform:uppercase;
+  padding:6px 0 10px;border-bottom:1px dashed var(--line);margin-bottom:6px}
 .side button,.per button{padding:12px 14px;border:1px solid transparent;background:transparent;color:var(--tx);border-radius:12px;font:inherit;font-weight:600;text-align:left;cursor:pointer;transition:all .15s}
-.side button:hover,.per button:hover{background:var(--bg)}
+.side button{border-bottom:1px dashed color-mix(in srgb,var(--line) 70%,transparent)}
+.side button:last-child{border-bottom:0}
+.side button:hover,.per button:hover{background:var(--bg);color:var(--pri)}
 .side button.on,.per button.on{background:linear-gradient(135deg,var(--terra),#c2410c);color:#fff8ec;border-color:#c2410c;box-shadow:0 4px 12px rgba(194,65,12,.3)}
-.per{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}.per button{padding:8px 14px;text-align:center;background:var(--card);border:1px solid var(--line)}
-.kpi{border-top:4px solid var(--gold);position:relative;overflow:hidden}
+.per{display:inline-flex;gap:4px;margin-bottom:14px;flex-wrap:wrap;padding:4px;
+  background:var(--card);border:1px solid var(--line);border-radius:999px;box-shadow:0 2px 8px rgba(46,42,28,.06)}
+.per button{padding:7px 16px;text-align:center;background:transparent;border:1px solid transparent;border-radius:999px;font-size:13px}
+.per button.on{background:linear-gradient(135deg,var(--terra),#c2410c);color:#fff8ec;border-color:#c2410c;box-shadow:0 3px 10px rgba(194,65,12,.3)}
+.kpi{border-top:4px solid var(--gold);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(46,42,28,.14)}
 .kpi:nth-child(4n+1){border-top-color:var(--terra)}
 .kpi:nth-child(4n+2){border-top-color:var(--olive)}
 .kpi:nth-child(4n+3){border-top-color:var(--gold)}
 .kpi:nth-child(4n+4){border-top-color:#0284c7}
 .kpi::after{content:"";position:absolute;top:0;right:0;width:70px;height:70px;border-radius:50%;
   background:radial-gradient(circle,color-mix(in srgb,var(--gold) 18%,transparent),transparent 70%);pointer-events:none}
-.tt th{color:var(--mut);font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
-.tt td{white-space:nowrap}.tt tfoot td{font-weight:800;border-bottom:0}
+.card.scroll{padding:0;overflow:hidden}
+.card.scroll table{margin:0}
+.tt th{color:var(--mut);font-weight:700;font-size:11px;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;
+  background:color-mix(in srgb,var(--bg) 80%,var(--card));padding:12px 10px}
+.tt td{white-space:nowrap;padding:11px 10px}
+.tt tbody tr{transition:background .12s}
+.tt tfoot td{font-weight:800;border-bottom:0;border-top:2px solid var(--gold-soft);padding:12px 10px;background:color-mix(in srgb,var(--gold-soft) 35%,var(--card))}
 .num{text-align:right}
 .bar{height:10px;background:var(--gold-soft);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--terra),var(--gold))}
 @media (max-width:760px){.adm{grid-template-columns:1fr}.side{position:static;flex-direction:row;overflow-x:auto}.side button{white-space:nowrap}}
