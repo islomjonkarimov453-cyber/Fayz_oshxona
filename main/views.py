@@ -14,7 +14,6 @@ from .state import bump_revision
 # Har bir login o'z sahifasiga ega — boshqalariga kira olmaydi.
 ROLE_PAGES = {'admin': 'admin', 'admin2': 'cook', 'admin3': 'waiter'}
 ROLE_URLS = {'admin': 'main:main', 'cook': 'main:cook_panel', 'waiter': 'main:waiter'}
-ROLE_LABELS = {'admin': 'Admin', 'cook': 'Oshpaz', 'waiter': 'Ofitsiant'}
 
 
 def role_required(role):
@@ -54,13 +53,6 @@ def flutter_app(request, path=''):
 def login_view(request):
     if request.user.is_authenticated:
         return redirect(ROLE_URLS.get(ROLE_PAGES.get(request.user.username), 'main:main'))
-    from django.contrib.auth.models import User
-    users = [
-        {'username': u.username, 'name': u.get_full_name() or u.username,
-         'role': ROLE_LABELS[ROLE_PAGES[u.username]]}
-        for u in User.objects.filter(is_active=True, username__in=ROLE_PAGES)
-        .order_by('username')
-    ]
     error = None
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -70,7 +62,7 @@ def login_view(request):
             auth_login(request, user)
             return redirect(ROLE_URLS[ROLE_PAGES[username]])
         error = "Login yoki parol noto'g'ri"
-    return render(request, 'login.html', {'error': error, 'users': users})
+    return render(request, 'login.html', {'error': error})
 
 
 def logout_view(request):

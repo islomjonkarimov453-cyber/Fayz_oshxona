@@ -12,82 +12,128 @@
 <link rel="apple-touch-icon" href="{% static 'images/icon-180.png' %}">
 <link rel="stylesheet" href="{% static 'css/style.css' %}?v=4">
 <style>
-  body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-  .login-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:32px 26px;box-shadow:0 12px 40px rgba(0,0,0,.12)}
-  .login-card h1{margin:0 0 4px;font-size:22px;text-align:center;display:block}
-  .login-card .sub{margin:0 0 22px;text-align:center;color:var(--mut);font-size:13px}
-  .login-card label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px;font-weight:600}
-  .login-card input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--tx);font-size:16px;box-sizing:border-box}
-  .login-card .btn{width:100%;margin-top:22px;padding:13px}
-  .login-err{background:var(--bad);color:#fff;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:6px;text-align:center}
-  .login-logo{text-align:center;font-size:44px;margin-bottom:10px}
-  .user-chips{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
-  .user-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--tx);font-weight:600;font-size:15px;cursor:pointer;text-align:left;width:100%}
-  .user-chip.on{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 10%,var(--bg))}
-  .user-chip .avatar{width:42px;height:42px;border-radius:12px;background:var(--pri);color:var(--pri-tx);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-  .user-chip .meta{flex:1}
-  .user-chip .role{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
-  .user-chip .arrow{color:var(--mut);font-size:18px}
-  .apk-box{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
-  .apk-title{font-size:13px;font-weight:700;color:var(--mut);text-align:center;margin-bottom:10px}
-  .apk-links{display:flex;flex-direction:column;gap:8px}
-  .apk-link{display:block;text-align:center;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--tx);font-weight:600;font-size:14px;text-decoration:none}
-  .apk-link:active{border-color:var(--pri)}
-  .apk-note{margin-top:10px;font-size:11px;color:var(--mut);text-align:center;line-height:1.4}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(212,175,55,.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(20,120,110,.35), transparent 60%),
+      linear-gradient(160deg,#062e2b 0%,#0b3d3a 45%,#0f4f4a 100%);
+    padding:20px;
+  }
+  .hotel-card{
+    width:100%;max-width:400px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(212,175,55,.35);
+    border-radius:24px;
+    padding:40px 32px 32px;
+    backdrop-filter:blur(14px);
+    box-shadow:0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+    color:#f3efe4;
+    text-align:center;
+  }
+  .hotel-card .logo{
+    width:96px;height:96px;margin:0 auto 14px;border-radius:50%;
+    background:linear-gradient(145deg,#d4af37,#b8912a);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 10px 30px rgba(212,175,55,.35), inset 0 2px 6px rgba(255,255,255,.4);
+    padding:10px;
+  }
+  .hotel-card .logo img{width:100%;height:100%;object-fit:contain}
+  .hotel-card h1{
+    font-size:26px;font-weight:800;letter-spacing:.5px;
+    background:linear-gradient(90deg,#f6e27a,#d4af37,#f6e27a);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hotel-card .stars{color:#d4af37;letter-spacing:6px;font-size:14px;margin:6px 0 2px}
+  .hotel-card .sub{color:rgba(243,239,228,.65);font-size:13px;margin-bottom:26px}
+  .hotel-card label{
+    display:block;text-align:left;font-size:12px;font-weight:700;
+    letter-spacing:1.2px;text-transform:uppercase;color:#d4af37;margin:0 0 8px 4px;
+  }
+  .field{position:relative;margin-bottom:18px}
+  .field input{
+    width:100%;padding:15px 16px 15px 46px;
+    border:1px solid rgba(212,175,55,.3);border-radius:14px;
+    background:rgba(0,0,0,.25);color:#fff;font-size:16px;
+    outline:none;transition:border-color .2s, box-shadow .2s;
+  }
+  .field input::placeholder{color:rgba(243,239,228,.35)}
+  .field input:focus{border-color:#d4af37;box-shadow:0 0 0 3px rgba(212,175,55,.18)}
+  .field .icon{
+    position:absolute;left:15px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;color:rgba(212,175,55,.8);pointer-events:none;
+  }
+  .login-err{
+    background:rgba(220,53,69,.9);color:#fff;border-radius:12px;
+    padding:11px 14px;font-size:13px;margin-bottom:16px;text-align:center;
+  }
+  .btn{
+    width:100%;padding:15px;border:none;border-radius:14px;cursor:pointer;
+    font-size:16px;font-weight:800;letter-spacing:.5px;color:#3a2c05;
+    background:linear-gradient(135deg,#f6e27a,#d4af37 55%,#b8912a);
+    box-shadow:0 10px 25px rgba(212,175,55,.35), inset 0 1px 0 rgba(255,255,255,.5);
+    transition:transform .15s, box-shadow .15s;
+  }
+  .btn:active{transform:scale(.98)}
+  .roles{
+    display:flex;justify-content:center;gap:8px;margin-top:22px;flex-wrap:wrap;
+  }
+  .roles span{
+    font-size:11px;padding:5px 12px;border-radius:999px;
+    border:1px solid rgba(212,175,55,.3);color:rgba(243,239,228,.6);
+    background:rgba(0,0,0,.2);
+  }
+  .apk-box{margin-top:26px;border-top:1px solid rgba(212,175,55,.25);padding-top:18px}
+  .apk-title{font-size:12px;font-weight:700;color:#d4af37;text-align:center;margin-bottom:10px;letter-spacing:.5px}
+  .apk-link{
+    display:block;text-align:center;padding:12px;border-radius:12px;
+    border:1px solid rgba(212,175,55,.4);background:rgba(0,0,0,.25);
+    color:#f3efe4;font-weight:700;font-size:14px;text-decoration:none;
+    transition:border-color .2s;
+  }
+  .apk-link:active{border-color:#d4af37}
+  .apk-note{margin-top:10px;font-size:11px;color:rgba(243,239,228,.5);text-align:center;line-height:1.5}
 </style>
 </head>
 <body>
-<div class="login-card">
-  <div class="login-logo"><img src="{% static 'images/img_1.png' %}" alt="" style="width:72px;height:72px;object-fit:contain"></div>
+<div class="hotel-card">
+  <div class="logo"><img src="{% static 'images/img_1.png' %}" alt="Fayz Baliqxonasi"></div>
   <h1>Fayz Baliqxonasi</h1>
-  <p class="sub">Davom etish uchun kiring</p>
+  <div class="stars">★★★★★</div>
+  <p class="sub">Xush kelibsiz! Davom etish uchun tizimga kiring</p>
+
   {% if error %}<div class="login-err">{{ error }}</div>{% endif %}
-  {% if users %}
-  <div class="user-chips" id="chips">
-    {% for u in users %}
-    <button type="button" class="user-chip" data-u="{{ u.username }}">
-      <span class="avatar">{{ u.name|first|upper }}</span>
-      <span class="meta">
-        <span style="display:block">{{ u.name }}</span>
-        <span class="role">{{ u.role }}</span>
-      </span>
-      <span class="arrow">›</span>
-    </button>
-    {% endfor %}
-  </div>
-  {% endif %}
+
   <form method="post" action="{% url 'main:login' %}">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.GET.next|default:'/' }}">
-    <input id="username" name="username" type="hidden" value="">
-    <div id="pwbox" style="display:none">
-      <label for="password">Parol</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required>
-      <button class="btn" type="submit">Kirish</button>
+
+    <label for="username">Login</label>
+    <div class="field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <input id="username" name="username" type="text" autocomplete="username" placeholder="Login" required autofocus>
     </div>
+
+    <label for="password">Parol</label>
+    <div class="field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+    </div>
+
+    <button class="btn" type="submit">KIRISH</button>
   </form>
+
+  <div class="roles">
+    <span>Admin</span><span>Ofitsiant</span><span>Oshpaz</span>
+  </div>
+
   <div class="apk-box">
     <div class="apk-title">📱 Mobil ilovani yuklab olish</div>
-    <div class="apk-links">
-      <a class="apk-link" href="{% static 'app-release.apk' %}" download>⬇ Yuklab olish (bitta APK)</a>
-    </div>
+    <a class="apk-link" href="{% static 'app-release.apk' %}" download>⬇ Yuklab olish (bitta APK)</a>
     <div class="apk-note">APK o'rnatish uchun telefonda "Noma'lum manbalardan o'rnatish" ruxsatini bering.</div>
   </div>
 </div>
-<script>
-(function(){
-  var input=document.getElementById('username');
-  var chips=document.querySelectorAll('.user-chip');
-  chips.forEach(function(c){
-    c.addEventListener('click',function(){
-      input.value=c.getAttribute('data-u');
-      chips.forEach(function(x){x.classList.remove('on')});
-      c.classList.add('on');
-      document.getElementById('pwbox').style.display='block';
-      document.getElementById('password').focus();
-    });
-  });
-})();
-</script>
 </body>
 </html>
